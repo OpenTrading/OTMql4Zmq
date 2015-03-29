@@ -1,0 +1,10 @@
+commit f818e29127434cea9400ff2b73139bfd2a7cf262
+Date:   Sun Mar 29 04:32:40 2015 +0300
+
+    Initial commit of AustenConrad's mql4zmq code checked out from
+    https://github.com/AustenConrad/mql4zmq/
+
+commit c8cb883e3b735d25b65187e719787aab74882cdf
+Date:   Sat Mar 28 23:47:41 2015 +0000
+
+    Initial commit

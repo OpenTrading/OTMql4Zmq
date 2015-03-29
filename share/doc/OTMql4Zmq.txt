@@ -1,6 +1,3 @@
-# OTMql4Zmq
-Open Trading Metaquotes4 ZeroMQ Bridge
-
 MQL4ZMQ - MQL4 bindings for ZeroMQ  
 
 Based in work by 2012 Austen Conrad:
