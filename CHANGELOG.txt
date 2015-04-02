@@ -1,3 +1,8 @@
+commit 289ed35ceda8e973a652cbb288b36fb85693f4f3
+Date:   Thu Apr 2 19:59:30 2015 +0300
+
+    Moved libraries down into Libraries/OTMql4 to keep things tidy.
+
 commit 65704ac44fd55f66ea665666a2da9dda1d24c514
 Date:   Thu Apr 2 18:35:00 2015 +0300
 
