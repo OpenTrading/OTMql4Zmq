@@ -1,3 +1,13 @@
+commit d14c0ebb835dbfd5997454fd7bf91035fd32490c
+Date:   Mon Mar 30 05:37:34 2015 +0300
+
+    First checkin of our rewrite of mql4zmq - untested WIP.
+
+commit c637cfdd371387c0464e06c12e674f58cd352ba1
+Date:   Sun Mar 29 18:19:41 2015 +0300
+
+    Started with some documentation.
+
 commit f818e29127434cea9400ff2b73139bfd2a7cf262
 Date:   Sun Mar 29 04:32:40 2015 +0300
 

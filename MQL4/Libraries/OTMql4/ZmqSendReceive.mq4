@@ -17,45 +17,74 @@
 #include <OTMql4/OTMql4Zmq.mqh>
 #include <OTMql4/OTLibLog.mqh>
 
-bool bZmqSend(int iSpeaker, string sMess) {
-  // returns true on success, false on failure
-  int response[1];
-  bool bRetval = false;
+#import "kernel32.dll"
+   int lstrlenA(int);
+   void RtlMoveMemory(uchar & arr[], int, int);
+   int LocalFree(int); // May need to be changed depending on how the DLL allocates memory
+#import
 
-  if (iSpeaker < 1) {
-      vError("Un Allocated speaker " + ": " + IntegerToString(iSpeaker));
-      return(false);  
-  }
-  // ALLOW null messages
+bool bZmqSend(int iSpeaker, string uMessage) {
+    // returns true on success, false on failure
+    int response[1];
+    bool bRetval = false;
+    int iPointer;
+    int iMessLen;
+    
+    if (iSpeaker < 1) {
+        vError("bZmqSend: Un Allocated speaker " + ": " + IntegerToString(iSpeaker));
+	return(false);  
+    }
+    uMessage = "0123456789ABCDEF" + uMessage;
+    iMessLen = StringLen(uMessage);
+    // ALLOW null messages
 
-  // Select the pointer to use, Select the memory address of the data buffer to point to,
-  // Set the length of the message pointer
-  // (needs to match the length of the memory address pointed to).
-  // Finally, we check for a return of -1 and catch the error.
-  if (zmq_msg_init_data(response, sMess, StringLen(sMess)) == -1) {
-    vError("error creating ZeroMQ message for data: " + sMess);
+    if (false) {
+    vTrace("bZmqSend: zmq_msg_init_size "+ uMessage + " length " + IntegerToString(iMessLen));
+    /*
+      if (zmq_msg_init_size(response, iMessLen) == -1) {
+        vError("error creating ZeroMQ message for size: " + uMessage);
+	return(false);
+      }
+      uchar sCharArray[];
+      ArrayResize(sCharArray, iMessLen);
+      StringToCharArray(uMessage, sCharArray);
+      iPointer = mql4zmq_msg_data(response);
+      RtlMoveMemory(iPointer, sCharArray, iMessLen);
+    */
+    } else {
+      vTrace("bZmqSend: zmq_msg_init_data "+ uMessage + " length " + IntegerToString(iMessLen));
+      
+    // Select the pointer to use, Select the memory address of the data buffer to point to,
+    // Set the length of the message pointer
+    // (needs to match the length of the memory address pointed to).
+    // Finally, we check for a return of -1 and catch the error.
+
+    if (zmq_msg_init_data(response, uMessage, iMessLen) == -1) {
+        vError("error creating ZeroMQ message for data: " + uMessage);
+	return(false);
+    }
+    }
+    
+    // Publish data.
+    //
+    // If you need to send a Multi-part message do the following (example is a three part message).
+    //    zmq_send(speaker, part_1, ZMQ_SNDMORE);
+    //    zmq_send(speaker, part_2, ZMQ_SNDMORE);
+    //    zmq_send(speaker, part_3);
+    // ZMQ_NOBLOCK
+    if (zmq_send(iSpeaker, response) == -1)  {
+        //? Will return -1 if no clients are connected to receive message.
+        vWarn("No clients subscribed: " + uMessage);
+    } else {
+        vDebug("Published message: " + uMessage);
+        bRetval = true;
+    }
+    // Deallocate message.
+    zmq_msg_close(response);
     return(bRetval);
-  }
-
-  // Publish data.
-  //
-  // If you need to send a Multi-part message do the following (example is a three part message).
-  //    zmq_send(speaker, part_1, ZMQ_SNDMORE);
-  //    zmq_send(speaker, part_2, ZMQ_SNDMORE);
-  //    zmq_send(speaker, part_3);
-  // ZMQ_NOBLOCK
-  if (zmq_send(iSpeaker, response) == -1)  {
-    // Will return -1 if no clients are connected to receive message.
-    vWarn("No clients subscribed: " + sMess);
-  } else {
-    vDebug("Published message: " + sMess);
-    bRetval = true;
-  }
-  // Deallocate message.
-  zmq_msg_close(response);
-  return(bRetval);
 }
 
+// crashes after 5-15 sec
 string uZmqReceiveNew (int iListener) {
     // Receive subscription data via main API //
     string uMessage = "";
@@ -66,75 +95,73 @@ string uZmqReceiveNew (int iListener) {
       vError("uZmqReceive: unallocated listener");
       return(-1);  
     }
-    //vTrace("uZmqReceive: Check for inbound message");
-  // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
-  //       we recieve a message. This is a problem as this function
-  //       will effectively block the MQL4 'Start' function from firing
-  //       when the next tick arrives if no message has arrived from
-  //       the publisher. If you want it to block and, therefore, instantly
-  //       receive messages (doesn't have to wait until next tick) then
-  //       change the below line to:
-  //
-  //       if (zmq_recv(iListener, request) != -1)
+    vTrace("uZmqReceive: Check for inbound message");
+    // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
+    //       we recieve a message. This is a problem as this function
+    //       will effectively block the MQL4 'Start' function from firing
+    //       when the next tick arrives if no message has arrived from
+    //       the publisher. If you want it to block and, therefore, instantly
+    //       receive messages (doesn't have to wait until next tick) then
+    //       change the below line to:
+    //
+    //       if (zmq_recv(iListener, request) != -1)
 
     uMessage = s_recv(iListener, ZMQ_NOBLOCK);
     iMessageLength = StringLen(uMessage);
     if (iMessageLength > 0) {
-	vTrace("Received message of length: " + iMessageLength);
+      vTrace("Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
 	
-	//vTrace("Drop excess null's from the pointer.");
-	//uMessage = StringSubstr(uMessage, 0, iMessageLength);
-    } else {
-        return("");
     }
 
     return(uMessage);
 }
 
+// access violation
 string uZmqReceive (int iListener) {
     // Receive subscription data via main API //
     string uMessage = "";
     int request[1];
     int iMessageLength;
 
-
     if (iListener < 1) {
       vError("uZmqReceive: unallocated listener");
       return(-1);  
     }
-    vTrace("Check for inbound message");
+    vTrace("uZmqReceive: initialize request");
     zmq_msg_init(request);
+    if ( request[0] < 1) {
+        vError("zmq_msg_init(request) failed!");
+        return("");
+    }
+    // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
+    //       we recieve a message. This is a problem as this function
+    //       will effectively block the MQL4 'Start' function from firing
+    //       when the next tick arrives if no message has arrived from
+    //       the publisher. If you want it to block and, therefore, instantly
+    //       receive messages (doesn't have to wait until next tick) then
+    //       change the below line to:
+    //
+    //       if (zmq_recv(iListener, request) != -1)
 
-  // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
-  //       we recieve a message. This is a problem as this function
-  //       will effectively block the MQL4 'Start' function from firing
-  //       when the next tick arrives if no message has arrived from
-  //       the publisher. If you want it to block and, therefore, instantly
-  //       receive messages (doesn't have to wait until next tick) then
-  //       change the below line to:
-  //
-  //       if (zmq_recv(iListener, request) != -1)
-
-  // Will return -1 if no message was received.
-  if (zmq_recv(iListener, request, ZMQ_NOBLOCK) != -1) {
-      vTrace("Retrive message size");
+    // Will return -1 if no message was received.
+    vTrace("uZmqReceive: zmq_recv");
+    if (zmq_recv(iListener, request, ZMQ_NOBLOCK) != -1) {
+      vTrace("Retrieve message size");
       iMessageLength = zmq_msg_size(request);
-      
-      vTrace("Retrieve pointer to message data");
-      uMessage = zmq_msg_data(request);
-
       if (iMessageLength > 0) {
-	vDebug("Received message of length: " + iMessageLength);
-	
-	//?vTrace("Drop excess null's from the pointer.");
-	//? uMessage = StringSubstr(uMessage, 0, iMessageLength);
-      }
+          vTrace("Retrieve pointer to message data");
+          uMessage = zmq_msg_data(request);
 
+	  vDebug("Received message of zmq_msg_size: " + iMessageLength);
+	
+	  vTrace("Drop excess null's from the pointer.");
+	  uMessage = StringSubstr(uMessage, 0, iMessageLength);
+	  vTrace("Returning message: " + uMessage + " of size " + IntegerToString(iMessageLength));
+      } 
     }
 
-  vTrace("Deallocate request.");
-  zmq_msg_close(request);
-  vTrace("Returning message: " + uMessage);
+    vTrace("Deallocate request.");
+    zmq_msg_close(request);
 
-  return(uMessage);
+    return(uMessage);
 }
