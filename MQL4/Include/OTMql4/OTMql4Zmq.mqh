@@ -9,7 +9,7 @@
    int LocalFree(int); // May need to be changed depending on how the DLL allocates memory
 #import
 
-#import "mql4zmq.dll"
+#import "OTMql4/mql4zmq.dll"
 //+--------------------------------------------------------------------------------+
 //| mql4zmq.dll exported functions with datatypes reconfigured for 
 //| MetaTrader 4's reduced type set. The intention is to not call these

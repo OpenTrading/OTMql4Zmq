@@ -1,3 +1,8 @@
+commit 65704ac44fd55f66ea665666a2da9dda1d24c514
+Date:   Thu Apr 2 18:35:00 2015 +0300
+
+    Added Python Publish and Suscribe scripts in bin.
+
 commit d14c0ebb835dbfd5997454fd7bf91035fd32490c
 Date:   Mon Mar 30 05:37:34 2015 +0300
 

@@ -3,6 +3,6 @@
 #property copyright "Copyright 2014 Open Trading"
 #property link      "https://github.com/OpenTrading/"
 
-#import "OTZmqProcessCmd.ex4"
+#import "OTMql4/OTZmqProcessCmd.ex4"
 
 string uOTZmqProcessCmd (string sMess);

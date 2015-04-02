@@ -6,10 +6,10 @@
 //| FOR ZEROMQ USE NOTES PLEASE REFERENCE:                           |
 //|                           http://api.zeromq.org/2-1:_start       |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2012 Austen Conrad"
+#property copyright "Copyright © 2012, Austen Conrad and 2014 Open Trading"
 #property link      "https://github.com/OpenTrading/"
 
-#import "ZmqSendReceive.ex4"
+#import "OTMql4/ZmqSendReceive.ex4"
 
 bool bZmqSend(int iSpeaker, string sMess);
 string uZmqReceive (int iListener);
