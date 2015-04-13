@@ -1,4 +1,4 @@
-// -*-mode: c++; fill-column: 75; tab-width: 8; coding: utf-8-dos -*-
+// -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 
 #property copyright "Copyright © 2012, Austen Conrad anf Open Trading"
 #property link      "https://github.com/OpenTrading/"
@@ -11,16 +11,16 @@
 
 #import "OTMql4/mql4zmq.dll"
 //+--------------------------------------------------------------------------------+
-//| mql4zmq.dll exported functions with datatypes reconfigured for 
+//| mql4zmq.dll exported functions with datatypes reconfigured for
 //| MetaTrader 4's reduced type set. The intention is to not call these
-//| diretly. Please use renamed versions in next section to reduce confusion.     
+//| diretly. Please use renamed versions in next section to reduce confusion.
 //|
-//| Type Changes: 
+//| Type Changes:
 //|                zmq_msg_t => int
 //|                const char => string
 //|                size_t => int
-//|                void (if it's a param that's passed) => string    
-//|                zmq_free_fn => int                        
+//|                void (if it's a param that's passed) => string
+//|                zmq_free_fn => int
 //+--------------------------------------------------------------------------------+
 
 // Tests.
@@ -68,8 +68,8 @@ int mql4zmq_device (int device, int insocket, int outsocket);
 // Helper Functions.
 // now int - was string
 int mql4s_recv (int socket, int flags);
-int mql4s_send (int socket, uchar &text[]); 
-int mql4s_sendmore (int socket, uchar &text[]); 
+int mql4s_send (int socket, uchar &text[]);
+int mql4s_sendmore (int socket, uchar &text[]);
 #import
 
 void vStringToCharArray0(string uData, uchar&sCharData[]) {
@@ -110,8 +110,8 @@ void vStringToCharArray3(string uData, uchar&sCharData[]) {
 }
 
 //+---------------------------------------------------------------------------------+
-//| Renaming of functions to original naming structure. Use these when buiding 
-//| your Expert Advisors so that we are consistant with ZeroMQ Naming conventions.     
+//| Renaming of functions to original naming structure. Use these when buiding
+//| your Expert Advisors so that we are consistant with ZeroMQ Naming conventions.
 //+---------------------------------------------------------------------------------+
 
 string zmq_ping(string uSource)
@@ -120,27 +120,27 @@ string zmq_ping(string uSource)
    vStringToCharArray(uSource, sCharData);
    uchar sCharArray[];
    // Call the DLL function and get its block of string memory as an int pointer to the
-   // memory rather than as a string    
+   // memory rather than as a string
    int recvPtr = ping(sCharData);
-   // Get the length of the string 
-   int iMessLen = lstrlenA(recvPtr);   
+   // Get the length of the string
+   int iMessLen = lstrlenA(recvPtr);
 
-   // if message length is 0, leave.  
+   // if message length is 0, leave.
    if (iMessLen < 1) {
 	Print("zmq_ping: Warning! Pong Message has zero length.");
  	return("");
    }
- 
+
    // Create a uchar[] array whose size is the string length (plus null terminator)
    ArrayResize(sCharArray, iMessLen);
-   
+
    // Use the Win32 API to copy the string from the block returned by the DLL
-   // into the uchar[] array   
+   // into the uchar[] array
    RtlMoveMemory(sCharArray, recvPtr, iMessLen);
    //?ArrayCopy(sCharArray, recvPtr, iMessLen+1);
    // Convert the uchar[] array to a message string
    string uMessage = CharArrayToString(sCharArray);
-   
+
    // Free the string memory returned by the DLL.
    // This step can be removed but, without it,
    // there will be a memory leak.
@@ -148,14 +148,14 @@ string zmq_ping(string uSource)
    // *depends on how the DLL allocated the memory*
    // The following assumes that the DLL has used LocalAlloc
    // (or an indirect equivalent). If not,
-   // then the following line may not fix the leak, and may even cause a crash.   
+   // then the following line may not fix the leak, and may even cause a crash.
    LocalFree(recvPtr);
    return(uMessage);
 }
 
 
 // Version.
-void zmq_version(int &major[],int &minor[],int &patch[]) 
+void zmq_version(int &major[],int &minor[],int &patch[])
 {
    mql4zmq_version(major,minor,patch);
 }
@@ -166,32 +166,31 @@ int zmq_errno()
    return(mql4zmq_errno());
 }
 
-string zmq_strerror(int errnum)
-{
+string zmq_strerror(int errnum) {
    uchar sCharArray[];
    // Call the DLL function and get its block of string memory as an int pointer to the
-   // memory rather than as a string    
+   // memory rather than as a string
    int recvPtr = mql4zmq_strerror(errnum);
-   // Get the length of the string 
-   int iMessLen = lstrlenA(recvPtr);   
+   // Get the length of the string
+   int iMessLen = lstrlenA(recvPtr);
 
-   // if message length is 0, leave.  
+   // if message length is 0, leave.
    if (iMessLen < 1) {
 	Print("zmq_strerror: Warning! Error Message has zero length.");
  	return("");
    }
    Print("iMessLen: "+iMessLen);
- 
+
    // Create a uchar[] array whose size is the string length (plus null terminator)
    ArrayResize(sCharArray, iMessLen+1);
-   
+
    // Use the Win32 API to copy the string from the block returned by the DLL
-   // into the uchar[] array   
+   // into the uchar[] array
    RtlMoveMemory(sCharArray, recvPtr, iMessLen+1);
    //?ArrayCopy(sCharArray, recvPtr, iMessLen+1);
    // Convert the uchar[] array to a message string
    string uMessage = CharArrayToString(sCharArray);
-   
+
    // Free the string memory returned by the DLL.
    // This step can be removed but, without it,
    // there will be a memory leak.
@@ -199,7 +198,7 @@ string zmq_strerror(int errnum)
    // *depends on how the DLL allocated the memory*
    // The following assumes that the DLL has used LocalAlloc
    // (or an indirect equivalent). If not,
-   // then the following line may not fix the leak, and may even cause a crash.   
+   // then the following line may not fix the leak, and may even cause a crash.
    //LocalFree(recvPtr);
    return(uMessage);
 }
@@ -241,29 +240,29 @@ string zmq_msg_data (int &msg[])
 {
    uchar sCharArray[];
    // Call the DLL function and get its block of string memory as an int pointer to the
-   // memory rather than as a string    
+   // memory rather than as a string
    int recvPtr = mql4zmq_msg_data(msg);
-   // Get the length of the string 
-   int iMessLen = mql4zmq_msg_size(msg);   
+   // Get the length of the string
+   int iMessLen = mql4zmq_msg_size(msg);
 
-   // if message length is 0, leave.  
+   // if message length is 0, leave.
    if (iMessLen < 1) {
 //	Print("zmq_msg_data: Warning! Message has zero length.");
  	return("");
    }
    Print("zmq_msg_data: Message Length mql4zmq_msg_size "+IntegerToString(iMessLen));
- 
+
    // Create a uchar[] array whose size is the string length (plus null terminator)
    ArrayResize(sCharArray, iMessLen+1);
-   
+
    // Use the Win32 API to copy the string from the block returned by the DLL
-   // into the uchar[] array   
+   // into the uchar[] array
    RtlMoveMemory(sCharArray, recvPtr, iMessLen);
    //? added just to be sure
    sCharArray[iMessLen+1] = (uchar)0x00;
    // Convert the uchar[] array to a message string
    string uMessage = CharArrayToString(sCharArray);
-   
+
    // Free the string memory returned by the DLL.
    // This step can be removed but, without it,
    // there will be a memory leak.
@@ -271,9 +270,9 @@ string zmq_msg_data (int &msg[])
    // *depends on how the DLL allocated the memory*
    // The following assumes that the DLL has used LocalAlloc
    // (or an indirect equivalent). If not,
-   // then the following line may not fix the leak, and may even cause a crash.   
+   // then the following line may not fix the leak, and may even cause a crash.
    //?LocalFree(recvPtr);
-   
+
    return(uMessage);
 }
 
@@ -287,7 +286,7 @@ int zmq_init (int io_threads)
 {
    return(mql4zmq_init(io_threads));
 }
-   
+
 int zmq_term (int context)
 {
    return(mql4zmq_term(context));
@@ -314,33 +313,33 @@ int zmq_setsockopt (int socket, int option, string optval)
 int zmq_getsockopt (int socket, int option, string optval)
 {
    uchar optvalChar[];
-   vStringToCharArray(optval, optvalChar);     
+   vStringToCharArray(optval, optvalChar);
    return(mql4zmq_getsockopt(socket, option, optvalChar, StringLen(optval)));
 }
 
 int zmq_bind (int socket, string addr)
 {
    uchar addrChar[];
-   vStringToCharArray(addr, addrChar); 
+   vStringToCharArray(addr, addrChar);
    return(mql4zmq_bind(socket, addrChar));
 }
 
 int zmq_connect (int socket, string addr)
 {
    uchar addrChar[];
-   vStringToCharArray(addr, addrChar);    
+   vStringToCharArray(addr, addrChar);
    return(mql4zmq_connect(socket, addrChar));
 }
 
-// Defaults to no flags; meaning the flag is an optional paramater. 
+// Defaults to no flags; meaning the flag is an optional paramater.
 // Common flags are: ZMQ_NOBLOCK, ZMQ_SNDMORE
 int zmq_send (int socket, int &msg[], int flags=0)
 {
-    
+
     return(mql4zmq_send(socket, msg, flags));
 }
 
-// Defaults to no flags; meaning the flag is an optional paramater. 
+// Defaults to no flags; meaning the flag is an optional paramater.
 // Common flags are: ZMQ_NOBLOCK, ZMQ_SNDMORE
 int zmq_recv (int socket, int &msg[], int flags=0)
 {
@@ -364,28 +363,28 @@ string s_recv (int socket, int flags=0)
 {
    uchar sCharArray[];
    //vTrace("Call the DLL function and get its block of string memory");
-   // as an int pointer to the memory rather than as a string    
+   // as an int pointer to the memory rather than as a string
    int recvPtr = mql4s_recv(socket, flags);
    //vTrace("Get the length of the string ");
-   int iMessLen = lstrlenA(recvPtr);   
+   int iMessLen = lstrlenA(recvPtr);
 
-   // if message length is 0, leave.  
+   // if message length is 0, leave.
    if (iMessLen < 1) {
 	// vDebug("s_recv: Message has zero length.");
  	return("");
    }
-   vDebug("s_recv: iMessLen lstrlenA "+iMessLen);
-   
+   // vDebug("s_recv: iMessLen lstrlenA "+iMessLen);
+
    //vTrace("Create a uchar[] array whose size is the string length (plus terminator)");
    ArrayResize(sCharArray, iMessLen+1);
-   
+
    // Use the Win32 API to
    //vTrace("copy the string from the block returned by the DLL");
-   // into the uchar[] array   
+   // into the uchar[] array
    RtlMoveMemory(sCharArray, recvPtr, iMessLen+1);
    //vTrace("Convert the uchar[] array to a message string");
    string uMessage = CharArrayToString(sCharArray);
-   
+
    //vTrace("Free the string memory returned by the DLL");
    // This step can be removed but, without it,
    // there will be a memory leak.
@@ -393,9 +392,9 @@ string s_recv (int socket, int flags=0)
    // *depends on how the DLL allocated the memory*
    // The following assumes that the DLL has used LocalAlloc
    // (or an indirect equivalent). If not,
-   // then the following line may not fix the leak, and may even cause a crash.   
+   // then the following line may not fix the leak, and may even cause a crash.
    LocalFree(recvPtr);
-   
+
 	//vTrace("Drop excess null's from the pointer.");
 	//uMessage = StringSubstr(uMessage, 0, iMessageLen);
    // vDebug("Return message string "+uMessage);
@@ -405,20 +404,20 @@ string s_recv (int socket, int flags=0)
 int s_send (int socket, string text)
 {
    uchar textChar[];
-   vStringToCharArray(text, textChar);     
+   vStringToCharArray(text, textChar);
    return(mql4s_send(socket, textChar));
 }
 
 int s_sendmore (int socket, string text)
 {
    uchar textChar[];
-   vStringToCharArray(text, textChar);     
+   vStringToCharArray(text, textChar);
    return(mql4s_sendmore(socket, textChar));
 }
 
 
 //+---------------------------------------------------------------------------------+
-//| Types and Options variables. Copied from zmq.h     
+//| Types and Options variables. Copied from zmq.h
 //+---------------------------------------------------------------------------------+
 
 // Message Flags.
@@ -434,7 +433,7 @@ int s_sendmore (int socket, string text)
 #define ZMQ_MSG_SHARED 128
 #define ZMQ_MSG_MASK 129
 
-// Socket types.                                                              
+// Socket types.
 #define ZMQ_PAIR 0
 #define ZMQ_PUB 1
 #define ZMQ_SUB 2
@@ -447,7 +446,7 @@ int s_sendmore (int socket, string text)
 #define ZMQ_XPUB 9
 #define ZMQ_XSUB 10
 
-//  Socket options.                                                           
+//  Socket options.
 #define ZMQ_HWM 1
 #define ZMQ_SWAP 3
 #define ZMQ_AFFINITY 4
@@ -469,7 +468,7 @@ int s_sendmore (int socket, string text)
 #define ZMQ_RECOVERY_IVL_MSEC 20   /*  opt. recovery time, reconcile in 3.x   */
 #define ZMQ_RECONNECT_IVL_MAX 21
 
-//  Send/recv options.                                                        
+//  Send/recv options.
 #define ZMQ_NOBLOCK 1
 #define ZMQ_SNDMORE 2
 

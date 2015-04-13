@@ -1,3 +1,8 @@
+commit 1d0ae157196a6f99cd5fe5e9a64a1aa58f26c888
+Date:   Thu Apr 2 20:29:43 2015 +0300
+
+    Updated the README.
+
 commit 289ed35ceda8e973a652cbb288b36fb85693f4f3
 Date:   Thu Apr 2 19:59:30 2015 +0300
 

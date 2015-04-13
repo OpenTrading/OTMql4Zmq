@@ -1,4 +1,4 @@
-// -*-mode: c++; fill-column: 75; tab-width: 8; coding: utf-8-dos -*-
+// -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 //+------------------------------------------------------------------+
 //|                                                  was mql4zmq.mq4 |
 //|                                  Copyright © 2012, Austen Conrad |

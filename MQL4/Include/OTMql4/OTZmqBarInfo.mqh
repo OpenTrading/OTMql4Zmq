@@ -1,8 +1,8 @@
-// -*-mode: c++; fill-column: 75; tab-width: 8; coding: utf-8-dos -*-
+// -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 
 /*
 This is a stub for the info we want put on the 0MQ wire.
-We will probably change the formating to be json.
+We will probably change the formating to be json or FITS.
 */
 
 #property copyright "Copyright 2014 Open Trading"
@@ -18,7 +18,7 @@ extern int iStochSlowing=3;
 string sBarInfo() {
   string sInfo;
 
-  sInfo="iMACD="+iMACD(NULL, 0, iFastEMA, iSlowEMA, iSignalSMA, 
+  sInfo="iMACD="+iMACD(NULL, 0, iFastEMA, iSlowEMA, iSignalSMA,
 		       PRICE_CLOSE, MODE_MAIN,0);
   sInfo=sInfo+",iMA="+iMA(NULL, 0 , iFastEMA, 0, MODE_LWMA, PRICE_MEDIAN, 0);
   sInfo=sInfo+",iStochasticMain="+iStochastic(NULL, 0, iStochKperiod, iStochDperiod, iStochSlowing,
