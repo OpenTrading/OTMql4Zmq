@@ -3,6 +3,7 @@
 
 OTMql4Zmq - MQL4 bindings for ZeroMQ, the high-speed messaging protocol
 for asynchronous communications between financial and trading applications.
+https://github.com/OpenTrading/OTMql4Zmq/
 
 With ZeroMQ http://zeromq.org/ you can:
 * Connect your code in any language, on any platform.
@@ -17,11 +18,11 @@ With ZeroMQ http://zeromq.org/ you can:
 These bindings are based on the work by 2012 Austen Conrad:
 https:///github.com/AustenConrad/mql4zmq
 A copy of the original code, including precompiled dlls is
-checked in in the directory `AustenConrad/`.
+checked in in the directory `net/Git/github.com/AustenConrad/`.
 
 #### Project History
 
-From AustenConrad/mql4zmq/mql4zmq.c:
+From net/Git/github.com/AustenConrad/mql4zmq/mql4zmq.c:
 
     The reason for all of this is that MetaTrader is a visual basic
     application and therefore is written using the STDCALL calling
@@ -42,14 +43,22 @@ From AustenConrad/mql4zmq/mql4zmq.c:
     renamed our exported functions with 'mql4' appended to the beginning
     of the name.  In the OTMql4Zmq.mqh we revert the names back to the
     original to reduce confusion when writing experts.
-    
+
+The source checked in to the `src/mql4zmq` directory is from:
+`git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
+
+This has the very simple changes needed to run against ZeroMQ 4.0.x.
+
 ### Pre-Release
 
 **This is a work in progress - a developers' pre-release version.**
 
-It works well on builds > 6xx, but the documentation of the changes to the
+It works on builds > 6xx, but the documentation of the changes to the
 original code still need writing, as well as more tests and testing on
-different versions. Only ZeroMq 2.x is supported for now.
+different versions. ZeroMq 4.x is being tested with this commit now.
+There are problems with corrupt messages; see the issue tracker:
+https://github.com/OpenTrading/OTMql4Zmq/issues
+
 
 The project wiki should be open for editing by anyone logged into GitHub:
 **Please report any system it works or doesn't work on in the wiki:
@@ -68,7 +77,7 @@ called `OTMql4`.
 
 ### Project
 
-Please file any bugs in the issues tracker:
+Please file any bugs in the issue tracker:
 https://github.com/OpenTrading/OTMql4Zmq/issues
 
 Use the Wiki to start topics for discussion:
@@ -76,3 +85,12 @@ https://github.com/OpenTrading/OTMql4Zmq/wiki
 It's better to use the wiki for knowledge capture, and then we can pull
 the important pages back into the documentation in the share/doc directory.
 You will need to be signed into github.com to see or edit in the wiki.
+## OTMql4Zmq Notes
+
+### Changes
+
+The source checked in to the `src/` directory is from:
+`git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
+
+This has the very simple changes needed to run against ZeroMQ 4.0.x.
+

@@ -1,0 +1,9 @@
+## OTMql4Zmq Notes
+
+### Changes
+
+The source checked in to the `src/` directory is from:
+`git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
+
+This has the very simple changes needed to run against ZeroMQ 4.0.x.
+

@@ -1,3 +1,13 @@
+commit 3028f23ce462531782acf3dc70d7b1e8b1d50b02
+Date:   Thu Apr 16 20:35:10 2015 +0300
+
+    Moved legacy code to net/Git/github.com/
+
+commit a1d6a468be3a7448c00e8e8f8aa02b34c1ec6cdb
+Date:   Mon Apr 13 20:16:26 2015 +0300
+
+    Started a testing script in OTMql4ZmqTest.mq4.
+
 commit 1d0ae157196a6f99cd5fe5e9a64a1aa58f26c888
 Date:   Thu Apr 2 20:29:43 2015 +0300
 
