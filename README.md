@@ -93,4 +93,35 @@ The source checked in to the `src/` directory is from:
 `git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
 
 This has the very simple changes needed to run against ZeroMQ 4.0.x.
+We deleted the `.mqh` file, as that was not updated for Build 600,
+and is replaced with our version in the `MQL4/Include/OTMql4` directory.
+
+We also deleted the `examples/` directory as we will have new Python
+scripts in `bin/` and those examples do not use our nomenclature.
+
+
+## PyZmq
+
+PyZMQ is the official Python binding for the ZeroMQ Messaging Library
+and can be found at https://pypi.python.org/pypi/pyzmq 
+The project's Home Page is at http://github.com/zeromq/pyzmq
+
+It can be used to run a subscriber or publisher from outside of
+Metatrader, to receive or send information. For example, look at
+`OTZmqSubscribe.py` and `OTZmqPublish.py` in the `bin` directory.
+
+We have used the latest version at the time of writing, but we expect
+that any version will work.
+
+### Installation
+
+If you are running the Python(x,y) distribution, then `pyzmq` is
+already included.
+
+If you have `pip` installed in your Python and are connected to the
+Internet, you can simply run `pip pyzmq`.
+
+Otherwise, download the Python egg:
+https://pypi.python.org/packages/2.7/p/pyzmq/pyzmq-14.5.0-py2.7-win32.egg
+and place it as-is in your Python's site-packages directory:
 

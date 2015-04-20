@@ -6,4 +6,10 @@ The source checked in to the `src/` directory is from:
 `git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
 
 This has the very simple changes needed to run against ZeroMQ 4.0.x.
+We deleted the `.mqh` file, as that was not updated for Build 600,
+and is replaced with our version in the `MQL4/Include/OTMql4` directory.
+
+We also deleted the `examples/` directory as we will have new Python
+scripts in `bin/` and those examples do not use our nomenclature.
+
 

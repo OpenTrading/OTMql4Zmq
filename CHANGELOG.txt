@@ -1,3 +1,22 @@
+commit e96a6465cf722542cc3081db504dae0ed1e41928
+Date:   Fri Apr 17 22:29:27 2015 +0300
+
+    Removed src/mql4zmq/examples/
+    as these will no longer use our nomeclature, and
+    we will do test scripts in Scripts and python scripts in bin.
+
+commit f6152ed12247014e4f5914c4fa55393d01b62ff0
+Date:   Fri Apr 17 21:14:51 2015 +0300
+
+    Rebased the source code on github.com/ungratefulson/mql4zmq/
+    to move the Zmq version up to 4.0.4 - the src changes are trivial.
+    
+    Used his pre-compiled binaries for now - we'll recompile them
+    ourselves as soon as time permits.
+    
+    Added a copy of our starting point to net/Git/github.com/ungratefulson
+    so that we have an explicit version of ur starting point.
+
 commit 3028f23ce462531782acf3dc70d7b1e8b1d50b02
 Date:   Thu Apr 16 20:35:10 2015 +0300
 
