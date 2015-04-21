@@ -123,5 +123,6 @@ Internet, you can simply run `pip pyzmq`.
 
 Otherwise, download the Python egg:
 https://pypi.python.org/packages/2.7/p/pyzmq/pyzmq-14.5.0-py2.7-win32.egg
-and place it as-is in your Python's site-packages directory:
+and `easy_install` it into your Python's site-packages directory.
+
 

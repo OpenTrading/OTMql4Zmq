@@ -2,7 +2,7 @@
 
 /*
 
-I know his is verbose and could be done more compactly,
+I know this is verbose and could be done more compactly,
 but it's clean and robust so I'll leave it like this for now.
 
 If you want to extend this for your own functions you have declared in Mql4,

@@ -1,3 +1,8 @@
+commit 8876b5971efddf92970ed8e14c9e70d4265f95ce
+Date:   Mon Apr 20 08:43:24 2015 +0300
+
+    Started documening using pyzmq for testing in 05PyZmq.txt.
+
 commit e96a6465cf722542cc3081db504dae0ed1e41928
 Date:   Fri Apr 17 22:29:27 2015 +0300
 
