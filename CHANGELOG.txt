@@ -1,3 +1,11 @@
+commit 21caab07061e75a856c6e06a0f7d21601cee71b2
+Date:   Tue Apr 21 23:14:13 2015 +0300
+
+    Added an Expert to send and receive over ZeroMQ
+    MQL4/Experts/OTMql4/OTZmqCmdEA.mq4
+    
+    It's not fully functional yet, but checked in to work on.
+
 commit 8876b5971efddf92970ed8e14c9e70d4265f95ce
 Date:   Mon Apr 20 08:43:24 2015 +0300
 
