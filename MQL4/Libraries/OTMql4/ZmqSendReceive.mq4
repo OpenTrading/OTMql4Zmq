@@ -2,21 +2,23 @@
 
 //+------------------------------------------------------------------+
 //|                                                      mql4zmq.mq4 |
-//|                                  Copyright © 2012, Austen Conrad |
+//|                                    Copyright 2012, Austen Conrad |
 //|                                                                  |
 //| FOR ZEROMQ USE NOTES PLEASE REFERENCE:                           |
 //|                           http://api.zeromq.org/2-1:_start       |
 //+------------------------------------------------------------------+
 
-#property copyright "Copyright © 2012, Austen Conrad and 2014 Open Trading"
+#property copyright "Copyright 2012 Austen Conrad and 2014 Open Trading"
 #property link      "https://github.com/OpenTrading/"
 #property library
 
 #include <stdlib.mqh>
 #include <stderror.mqh>
+#include <OTMql4/OTLibStrings.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
 #include <OTMql4/OTLibLog.mqh>
 
+//FixMe: move
 #import "kernel32.dll"
    int lstrlenA(int);
    void RtlMoveMemory(uchar & arr[], int, int);
@@ -120,17 +122,17 @@ string uZmqReceiveNew (int iListener) {
 string uZmqReceive (int iListener) {
     // Receive subscription data via main API //
     string uMessage = "";
-    int request[1];
+    int iRequestPtr[1];
     int iMessageLength;
 
     if (iListener < 1) {
 	vError("uZmqReceive: unallocated listener");
 	return(-1);
     }
-    vTrace("uZmqReceive: initialize request");
-    zmq_msg_init(request);
-    if ( request[0] < 1) {
-        vError("zmq_msg_init(request) failed!");
+    vTrace("uZmqReceive: initialize iRequestPtr");
+    zmq_msg_init(iRequestPtr);
+    if ( iRequestPtr[0] < 1) {
+        vError("zmq_msg_init(iRequestPtr) failed!");
         return("");
     }
     // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
@@ -141,27 +143,27 @@ string uZmqReceive (int iListener) {
     //       receive messages (doesn't have to wait until next tick) then
     //       change the below line to:
     //
-    //       if (zmq_recv(iListener, request) != -1)
+    //       if (zmq_recv(iListener, iRequestPtr) != -1)
 
     // Will return -1 if no message was received.
     vTrace("uZmqReceive: zmq_recv");
-    if (zmq_recv(iListener, request, ZMQ_NOBLOCK) != -1) {
-	vTrace("Retrieve message size");
-	iMessageLength = zmq_msg_size(request);
+    if (zmq_recv(iListener, iRequestPtr, ZMQ_NOBLOCK) != -1) {
+	vTrace("uZmqReceive: Retrieve message size");
+	iMessageLength = zmq_msg_size(iRequestPtr);
 	if (iMessageLength > 0) {
-	    vTrace("Retrieve pointer to message data");
-	    uMessage = zmq_msg_data(request);
+	    vTrace("uZmqReceive: Retrieve pointer to message data");
+	    uMessage = zmq_msg_data(iRequestPtr);
 
-	    vDebug("Received message of zmq_msg_size: " + iMessageLength);
+	    vDebug("uZmqReceive: Received message of zmq_msg_size: " + iMessageLength);
 	
-	    vTrace("Drop excess null's from the pointer.");
+	    vTrace("uZmqReceive: Drop excess null's from the pointer.");
 	    uMessage = StringSubstr(uMessage, 0, iMessageLength);
-	    vTrace("Returning message: " + uMessage + " of size " + IntegerToString(iMessageLength));
+	    vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
 	}
     }
 
-    vTrace("Deallocate request.");
-    zmq_msg_close(request);
+    vTrace("uZmqReceive: Deallocate iRequestPtr.");
+    zmq_msg_close(iRequestPtr);
 
     return(uMessage);
 }

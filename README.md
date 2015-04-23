@@ -108,7 +108,7 @@ The project's Home Page is at http://github.com/zeromq/pyzmq
 
 It can be used to run a subscriber or publisher from outside of
 Metatrader, to receive or send information. For example, look at
-`OTZmqSubscribe.py` and `OTZmqPublish.py` in the `bin` directory.
+`OTZmqSubscribe.py` and `OTZmqRequest.py` in the `bin` directory.
 
 We have used the latest version at the time of writing, but we expect
 that any version will work.

@@ -12,6 +12,7 @@ extern string sBindAddress="127.0.0.1";
 #include <OTMql4/OTZmqBarInfo.mqh>
 
 #include <OTMql4/OTLibLog.mqh>
+#include <OTMql4/OTLibStrings.mqh>
 #include <OTMql4/OTZmqProcessCmd.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
 #include <OTMql4/ZmqSendReceive.mqh>
@@ -102,10 +103,6 @@ int OnInit() {
 	    return(-1);
 	}
 	vInfo("OnInit: bound the listener on "+sBindAddress+":"+iRECV_PORT);
-	// Subscribe to the command channel (i.e. "cmd").
-	// NOTE: to subscribe to multiple channels call zmq_setsockopt multiple times.
-	zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, "cmd");
-	zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, "exec");
 
 	GlobalVariableSet("fZmqSpeaker", iSPEAKER);
 	GlobalVariableSet("fZmqListener", iLISTENER);
@@ -169,58 +166,70 @@ void OnDeinit(const int iReason) {
 }
 
 void OnTimer() {
-    string uRetval="";
-    string uMessage;
-    bool bRetval;
-    string sMess;
 
     /* timer events can be called before we are ready */
     if (GlobalVariableCheck("fZmqContextUsers") == false) {
       return;
     }
+    
+    vListen();
+}
 
+void vListen() {
+    string uRetval="";
+    string uMessage;
+    bool bRetval;
+    string sMess;
+    
     iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
     if (iLISTENER < 1) {
-        vPanic("OnTimer: unallocated listener");
+        vError("OnTimer: unallocated listener");
         return;
     }
+    
     vTrace("OnTimer: looking for messages");
     uMessage = uZmqReceive(iLISTENER);
-    vTrace("OnTimer: got message: " + uMessage);
+    vTrace("OnTimer: found message: " + uMessage);
     if (StringLen(uMessage) == 0) {
-      // we will always get null messages if nothing is on the wire
-      // as we are not blocking, which would block the tick processing
-      // but we seem to also get garbage - empty CR or LF perhaps?
-      // FixMe - investigate
-      return;
+	// we will always get null messages if nothing is on the wire
+	// as we are not blocking, which would block the tick processing
+	// but we seem to also get garbage - empty CR or LF perhaps?
+	// FixMe - investigate
+	return;
     }
     uRetval = "";
 
     if (StringFind(uMessage, "exec", 0) == 0) {
-      // execs are executed immediately and return a result on the wire
-      // They're things that take less than a tick to evaluate
-      //vTrace("Processing immediate exec message: " + uMessage);
-      uRetval = uOTZmqProcessCmd(uMessage);
-      sMess="retval|"+uRetval;
-      vDebug("Sending message: " + sMess);
-      bRetval=bZmqSend(iSPEAKER, sMess);
+	vTrace("OnTimer: got exec message: " + uMessage);
+	// execs are executed immediately and return a result on the wire
+	// They're things that take less than a tick to evaluate
+	//vTrace("Processing immediate exec message: " + uMessage);
+	uRetval = zOTZmqProcessCmd(uMessage);
+	sMess="retval|"+uRetval;
+	vDebug("NOT Sending message back through iLISTENER: " + sMess);
+	// bRetval=bZmqSend(iLISTENER, sMess);
+	Sleep(1000);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
-    //vDebug("Sending NULL message to: " + iLISTENER);
-    //bZmqSend(iLISTENER, "");
-      vTrace("Processing defered cmd message: " + uMessage);
-      uRetval = uOTZmqProcessCmd(uMessage);
-      if (StringLen(uRetval) > 0) {
-        sMess="retval|"+uRetval;
-        vDebug("Publishing message: " + sMess);
-        bRetval=bZmqSend(iSPEAKER, sMess);
-      } else {
-	vWarn("Unprocessed message: " + uMessage);
-      }
+	vTrace("OnTimer: got cmd message: " + uMessage);
+	
+	vDebug("NOT Sending NULL message to: " + iLISTENER);
+	//	bZmqSend(iLISTENER, "");
+	Sleep(1000);
+      
+	vTrace("Processing defered cmd message: " + uMessage);
+	uRetval = zOTZmqProcessCmd(uMessage);
+	if (StringLen(uRetval) > 0) {
+	    sMess="retval|"+uRetval;
+	    vDebug("Publishing message: " + sMess);
+	    bRetval=bZmqSend(iSPEAKER, sMess);
+	} else {
+	    vWarn("Unprocessed message: " + uMessage);
+	}
     } else {
         vError("Internal error, not cmd or exec: " + uMessage);
     }
 
-  return;
+    return;
 }
 
 void OnTick() {
@@ -262,4 +271,7 @@ void OnTick() {
      if (bRetval == false) {
          vWarn("OnTick: failed bZmqSend");
      }
+
+     //? vListen();
+
 }

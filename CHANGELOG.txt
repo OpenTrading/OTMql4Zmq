@@ -1,3 +1,10 @@
+commit eaf9f462acecf460f088055d581148f0d4d37445
+Date:   Wed Apr 22 14:22:37 2015 +0300
+
+    Renamed  bin/OTZmqPublish.py to bin/OTZmqRequest.py
+    to eliminate some confusion in the code. The
+    socket to get information from Metatrader is a REQ/REP socket.
+
 commit 21caab07061e75a856c6e06a0f7d21601cee71b2
 Date:   Tue Apr 21 23:14:13 2015 +0300
 

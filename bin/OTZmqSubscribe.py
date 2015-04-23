@@ -56,11 +56,11 @@ def bCloseContextSockets(oContext, oSubSocket, oPubSocket, lOptions):
 def iMain():
     (lOptions, lArgs) = oParser.parse_args()
 
-    # Always subscribe to retval so we can always see
-    # the value returned by Publish.py
-    if "retval" not in lArgs: lArgs.append("retval")
-    if lKnownTypes:
-        for sElt in lArgs: assert sElt in lKnownTypes
+    if not lArgs:
+         lArgs.append("")
+    elif lKnownTypes:
+        for sElt in lArgs:
+            assert sElt in lKnownTypes
 
     sSubPort = lOptions.sSubPort
     assert int(sSubPort) > 0 and int(sSubPort) < 66000
