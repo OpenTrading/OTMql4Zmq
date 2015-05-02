@@ -9,7 +9,7 @@ extern int iRECV_PORT=2028;
 // can replace this with the IP address of an interface - not lo
 extern string sBindAddress="127.0.0.1";
 
-#include <OTMql4/OTZmqBarInfo.mqh>
+#include <OTMql4/OTBarInfo.mqh>
 
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>

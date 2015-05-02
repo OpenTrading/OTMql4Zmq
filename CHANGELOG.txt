@@ -1,3 +1,18 @@
+commit 6126dc3610e11e2b3b703e10783e0bc8c7e49147
+Date:   Sat May 2 14:32:24 2015 +0300
+
+    Moved MQL4/Include/OTMql4/OTZmqBarInfo.mqh to
+    OTMql4LibMQL4/Include/OTMql4/OTBarInfo.mqh
+    so it can be used by other projects.
+
+commit 1193b5a63e27d0cfc2c693cf534f7104440a342c
+Date:   Thu Apr 23 17:00:42 2015 +0300
+
+    Refactored OTLibProcessCmd.mqh into OTLibMt4ProcessCmd.mqh
+    and OTZmqProcessCmd.mqh to make it easier for people to reuse
+    ProcessCmd with the OT additions, and to extend it to handle
+    their own additions.
+
 commit eaf9f462acecf460f088055d581148f0d4d37445
 Date:   Wed Apr 22 14:22:37 2015 +0300
 

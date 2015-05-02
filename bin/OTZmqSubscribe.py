@@ -1,4 +1,4 @@
-# -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: utf-8-dos -*-
+# -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: utf-8; encoding: utf-8-dos -*-
 
 # This Python script requires pyzmq
 # http://pypi.python.org/packages/source/p/pyzmq/
