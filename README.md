@@ -87,6 +87,14 @@ the important pages back into the documentation in the share/doc directory.
 You will need to be signed into github.com to see or edit in the wiki.
 ## OTMql4Zmq Notes
 
+### Problems
+
+We are having problems with the receiving of messages with the
+compiled DLL: the messages get received, but shortly afterwards,
+Mt4 crashes. If you have success, please report any system it works
+or doesn't work on in the wiki: include the Metatrader build number,
+the origin of the metatrader exe, the Windows version.
+
 ### Changes
 
 The source checked in to the `src/` directory is from:
@@ -107,18 +115,21 @@ and can be found at https://pypi.python.org/pypi/pyzmq
 The project's Home Page is at http://github.com/zeromq/pyzmq
 
 It can be used to run a subscriber or publisher from outside of
-Metatrader, to receive or send information. For example, look at
-`OTZmqSubscribe.py` and `OTZmqRequest.py` in the `bin` directory.
+Metatrader, to receive or send information. It requires
+the OpenTrading Metatrader-Python bridge
+https://github.com/OpenTrading/OTMql4Py/
 
-We have used the latest version at the time of writing, but we expect
-that any version will work.
+For example of using `pyzmq` instead of the compiled DLL, see
+`MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4`
 
 ### Installation
 
-If you are running the Python(x,y) distribution, then `pyzmq` is
-already included.
+You will need to have `pyzmq` installed in your Python.  We have used
+the latest version at the time of writing, but we expect that any
+version will work. If you are running the Python(x,y) distribution,
+then `pyzmq` is already included.
 
-If you have `pip` installed in your Python and are connected to the
+If not, and you have `pip` installed in your Python and are connected to the
 Internet, you can simply run `pip pyzmq`.
 
 Otherwise, download the Python egg:

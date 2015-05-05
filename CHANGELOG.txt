@@ -1,3 +1,10 @@
+commit 86ce2c3f676047edccb10081afa71e1ec628e56a
+Date:   Sat May 2 14:46:19 2015 +0300
+
+    Trying with pyzmq under OTMql4Py. Still having problems with
+    crashing Mt4 on receive. For a demo expert, see
+    MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4
+
 commit 6126dc3610e11e2b3b703e10783e0bc8c7e49147
 Date:   Sat May 2 14:32:24 2015 +0300
 

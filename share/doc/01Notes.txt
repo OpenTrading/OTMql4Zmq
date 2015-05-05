@@ -1,5 +1,13 @@
 ## OTMql4Zmq Notes
 
+### Problems
+
+We are having problems with the receiving of messages with the
+compiled DLL: the messages get received, but shortly afterwards,
+Mt4 crashes. If you have success, please report any system it works
+or doesn't work on in the wiki: include the Metatrader build number,
+the origin of the metatrader exe, the Windows version.
+
 ### Changes
 
 The source checked in to the `src/` directory is from:
