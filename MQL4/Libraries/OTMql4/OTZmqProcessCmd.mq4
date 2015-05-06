@@ -1,4 +1,4 @@
-// -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8; encoding: utf-8-dos -*-
+// -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 
 /*
 
@@ -23,6 +23,7 @@ goes on and handles it if zOTLibProcessCmd didn't.
 #include <stderror.mqh>
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>
+#include <OTMql4/OTLibSimpleFormatCmd.mqh>
 #include <OTMql4/OTLibMt4ProcessCmd.mqh>
 #include <OTMql4/OTLibProcessCmd.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
@@ -39,7 +40,7 @@ string zOTZmqProcessCmd(string uMess) {
        Returns "" if there is an error.
     */
    
-    string uType, uChart, uPeriod, uMark, uCmd;
+    string uType, uChartId, uIgnore, uMark, uCmd;
     string uArg1="";
     string uArg2="";
     string uArg3="";
@@ -62,15 +63,15 @@ string zOTZmqProcessCmd(string uMess) {
     iLen = ArraySize(aArrayAsList);
     vDebug("zOTZmqProcessCmd: " +uMess +" ArrayLen " +iLen);
 
-    uRetval = eOTLibPreProcessCmd(aArrayAsList);
+    uRetval = eOTLibSimpleUnformatCmd(aArrayAsList);
     if (uRetval != "") {
 	vError("eOTLibProcessCmd: preprocess failed with error: " +uRetval);
 	return("");
     }
     
     uType   = aArrayAsList[0];
-    uChart  = aArrayAsList[1];
-    uPeriod = aArrayAsList[2];
+    uChartId  = aArrayAsList[1];
+    uIgnore = aArrayAsList[2];
     uMark   = aArrayAsList[3];
     uCmd    = aArrayAsList[4];
     uArg1   = aArrayAsList[5];
@@ -83,7 +84,7 @@ string zOTZmqProcessCmd(string uMess) {
     vTrace("zOTZmqProcessCmd uKey: " +uKey +" uCmd: " +uCmd+ " uMark: " +uMark);
 
     if (uKey == "Zmq") {
-	uRetval = uProcessCmdZmq(uCmd, uChart, uPeriod, uArg1, uArg2, uArg3, uArg4, uArg5);
+	uRetval = uProcessCmdZmq(uCmd, uChartId, uIgnore, uArg1, uArg2, uArg3, uArg4, uArg5);
     } else {
 	uMsg="Unrecognized action: " + uMess; vWarn(uMsg);
 	uRetval="error|"+uMsg;
@@ -92,11 +93,11 @@ string zOTZmqProcessCmd(string uMess) {
     return (uMark+"|"+uRetval);
 }
 
-string uProcessCmdZmq (string uCmd, string uChart, string uPeriod, string uArg1, string uArg2, string uArg3, string uArg4, string uArg5) {
+string uProcessCmdZmq (string uCmd, string uChartId, string uIgnore, string uArg1, string uArg2, string uArg3, string uArg4, string uArg5) {
     string uMsg;
     string uRetval="none|";
 
-    vDebug("uProcessCmdZmq: " + uCmd + ", " + uChart + ", " + uPeriod);
+    vDebug("uProcessCmdZmq: " + uCmd + ", " + uChartId + ", " + uIgnore);
     if (uCmd == "ZmqVersion") {
 	int major[1]; int minor[1]; int patch[1];
 	zmq_version(major, minor, patch);

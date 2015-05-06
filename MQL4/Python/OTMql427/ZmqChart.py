@@ -23,10 +23,10 @@ from Mq4Chart import Mq4Chart
 
 class ZmqChart(Mq4Chart):
 
-    def __init__(self, sSymbol, iPeriod, iIsEA, **dParams):
+    def __init__(self, sChartId, **dParams):
         global oCONTEXT
 
-        Mq4Chart.__init__(self, sSymbol, iPeriod, iIsEA, dParams)
+        Mq4Chart.__init__(self, sChartId, dParams)
         if oCONTEXT is None:
             oCONTEXT = zmq.Context()
         self.oSpeakerPubsubSocket = None

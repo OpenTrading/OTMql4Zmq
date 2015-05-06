@@ -1,3 +1,14 @@
+commit 25ab5d7e6c2fb5966a04707010c8c3fd8bb1bcc3
+Date:   Wed May 6 16:33:07 2015 +0300
+
+    Added MQL4/Python/OTMql427/ZmqChart.py to make a chart abstraction
+    that uses zmq.
+
+commit b3c408c7505cf9871782ba4c562ddc849588a9ad
+Date:   Tue May 5 19:51:51 2015 +0300
+
+    Documented that we are having problems with the receiving of messages.
+
 commit 86ce2c3f676047edccb10081afa71e1ec628e56a
 Date:   Sat May 2 14:46:19 2015 +0300
 

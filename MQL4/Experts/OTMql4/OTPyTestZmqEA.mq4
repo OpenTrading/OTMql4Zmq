@@ -13,11 +13,17 @@ extern string uBIND_ADDRESS="127.0.0.1";
 extern string uStdOutFile="../../Logs/_test_PyTestZmqEA.txt";
 
 #include <OTMql4/OTBarInfo.mqh>
+/*
+This provides the function sBarInfo which puts together the
+information you want send to a remote client on every bar.
+Change to suit your own needs.
+*/
+#include <OTMql4/OTBarInfo.mqh>
 
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>
 //#include <OTMql4/OTZmqProcessCmd.mqh>
-#include <OTMql4/OTPy27.mqh>
+#include <OTMql4/OTLibPy27.mqh>
 //unused #include <OTMql4/OTPyZmq.mqh>
 
 int iTIMER_INTERVAL_SEC = 10;
@@ -31,6 +37,10 @@ int iACCNUM;
 int iTICK=0;
 int iBAR=1;
 
+int iIsEA=1;
+string uCHART_ID="";
+double fDebugLevel=0;
+
 string uOTPyZmqProcessCmd(string uCmd) {
     return("");
 }
@@ -43,10 +53,6 @@ void vPanic(string uReason) {
     ExpertRemove();
 }
 
-int iIsEA=1;
-string uCHART_NAME="";
-double fDebugLevel=0;
-
 string uSafeString(string uSymbol) {
     uSymbol = uStringReplace(uSymbol, "!", "");
     uSymbol = uStringReplace(uSymbol, "#", "");
@@ -54,7 +60,6 @@ string uSafeString(string uSymbol) {
     uSymbol = uStringReplace(uSymbol, ".", "");
     return(uSymbol);
 }
-
 
 int OnInit() {
     int iRetval;
@@ -82,8 +87,6 @@ int OnInit() {
 	uSYMBOL=Symbol();
 	iTIMEFRAME=Period();
 	iACCNUM=AccountNumber();
-	//? add iACCNUM +"|" ? It may change during the charts lifetime
-	uCHART_NAME="oChart"+"_"+uSafeString(uSYMBOL)+"_"+Period()+"_"+iIsEA;
     
 	uArg="import zmq";
 	vPyExecuteUnicode(uArg);
@@ -97,12 +100,9 @@ int OnInit() {
 	    return(-2);
 	}
 	vPyExecuteUnicode("from OTMql427 import ZmqChart");
-	/*
-	vLog(LOG_INFO, "rInstance of oZmqChart creating "+
-	     uCHART_NAME +" iIsEA "+ iIsEA);
-	*/
-	vPyExecuteUnicode(uCHART_NAME+"=ZmqChart.ZmqChart('" +
-			  Symbol() + "'," + Period() + ", " + iIsEA + ", " +
+	//? add iACCNUM +"|" ? It may change during the charts lifetime
+	uCHART_ID = uChartName(uSafeString(uSYMBOL), iTIMEFRAME, ChartID(), iIsEA);
+	vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
 			  "iSpeakerPort=" + iSEND_PORT + ", " +
 			  "iListenerPort=" + iRECV_PORT + ", " +
 			  "sIpAddress='" + uBIND_ADDRESS + "', " +
@@ -139,7 +139,6 @@ void OnTimer() {
     string uRetval="";
     string uMessage;
     string uMess;
-    bool bRetval;
 
     /* timer events can be called before we are ready */
     if (GlobalVariableCheck("fPyZmqContextUsers") == false) {
@@ -158,7 +157,7 @@ void OnTimer() {
 	
     uMess = iACCNUM +"|" +uSYMBOL +"|" +iTIMEFRAME +"|" + sTime;
 
-    uRetval = uPySafeEval(uCHART_NAME+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
+    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
     if (StringFind(uRetval, "ERROR:", 0) >= 0) {
 	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
 	vWarn("OnTimer: " +uRetval);
@@ -182,7 +181,7 @@ void vListen() {
     string uRetval, uMsg, uDeferMsg, uMess;
     string uType="retval";
     
-    uMsg = uPySafeEval(uCHART_NAME+".sRecvOnListener()");
+    uMsg = uPySafeEval(uCHART_ID+".sRecvOnListener()");
     if (StringFind(uMsg, "ERROR:", 0) >= 0) {
 	uMsg = "ERROR: sRecvOnListener " +" failed: "  + uMsg;
 	vWarn("vListen: " +uMsg);
@@ -206,7 +205,7 @@ void vListen() {
 	uRetval = "";
     }
 	
-    uRetval = uPySafeEval(uCHART_NAME+".eSendOnListener('retval|" + uRetval +"')");
+    uRetval = uPySafeEval(uCHART_ID+".eSendOnListener('retval|" + uRetval +"')");
     if (StringFind(uRetval, "ERROR:", 0) >= 0) {
 	uRetval = "ERROR: eSendOnListener " +" failed: "  + uRetval;
 	vWarn("vListen: " +uRetval);
@@ -220,7 +219,7 @@ void vListen() {
     vTrace("Processing defered cmd message: " + uDeferMsg);
     uMess = uOTPyZmqProcessCmd(uDeferMsg);
     
-    uRetval = uPySafeEval(uCHART_NAME+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
+    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
     if (StringFind(uRetval, "ERROR:", 0) >= 0) {
 	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
 	vWarn("vTick: " +uRetval);
@@ -276,7 +275,7 @@ void OnTick() {
 
     uMess  = iACCNUM +"|" +uSYMBOL +"|" +iTIMEFRAME +"|" +Bid +"|" +Ask +"|" +uInfo +"|" +sTime;
 
-    uRetval = uPySafeEval(uCHART_NAME+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
+    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
     if (StringFind(uRetval, "ERROR:", 0) >= 0) {
 	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
 	vWarn("OnTick: " +uRetval);
