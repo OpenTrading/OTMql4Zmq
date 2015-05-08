@@ -50,12 +50,9 @@ def oOptionParser():
     parser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
                       default="127.0.0.1",
                       help="the TCP address to subscribe on")
-    parser.add_option("-C", "--chart", action="store", dest="sChart", type="string",
-                      default="NULL",
-                      help="the chart currency")
-    parser.add_option("-P", "--period", action="store", dest="sPeriod", type="string",
-                      default="0",
-                      help="the chart period (0)")
+    parser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
+                      default="ANY",
+                      help="the chart ID")
     parser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
                       default=10,
                       help="timeout in seconds to wait for a reply (10)")
@@ -92,7 +89,7 @@ def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, lOptions):
     dPENDING[sMark] = sRequest
     #
     #
-    sRequest = sType +"|" +lOptions.sChart +"|" +lOptions.sPeriod +"|" +sMark +"|" +sRequest
+    sRequest = sType +"|" +lOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
     # zmq.error.ZMQError
     oSenderPubSocket.send_multipart([sType, sRequest])
     i = 1
@@ -140,27 +137,14 @@ def sDefaultExecType(sRequest):
             return "exec"
     return "cmd"
 
-def gRetvalToPython(sString, sMarkIn):
+def gRetvalToPython(sString, lElts):
     # raises MqlError
     global dPENDING
 
-    lElts = sString.split('|')
-    if len(lElts) <= 3:
-        # probably just for testing
-        vWarn("not enough | found in: %s" % (sString,))
-        return None
-    
-    sMarkOut = lElts[1]
-    assert sMarkOut, "[1] not found in: %s" % (sString,)
-
-    assert sMarkIn == sMarkOut, "%s marker not found in: %s" % (sMarkIn, sString,)
-    if sMarkIn not in dPENDING:
-        print("WARN: %s not in dPENDING" % (sMarkIn,))
-    else:
-        del dPENDING[sMarkIn]
-
-    sType = lElts[2]
-    sVal = lElts[3]
+    sType = lElts[4]
+    sVal = lElts[5]
+    if sVal == "":
+        return ""
     if sType == 'string':
         sRetval = sVal
     elif sType == 'error':
@@ -181,6 +165,9 @@ def gRetvalToPython(sString, sMarkIn):
         sRetval = None
     elif sType == 'void':
         sRetval = None
+    else:
+        print "WARN: unkown type i=%s in %r" % (sType, lElts,)
+        return None
     return sRetval
 
 def iMain():
@@ -213,40 +200,42 @@ def iMain():
                 sType = "exec"
             else:
                 sType = "cmd"
+            sType = "cmd"
 
             sMarkIn = sMakeMark()
             sRetval = sPushToPending(sMarkIn, sRequest, oSenderPubSocket, sType, lOptions)
-            if sRetval:
-                # we got an immediate answer without having to wait for it on the SUB
-                try:
-                    gRetval = gRetvalToPython(sRetval, sMarkIn)
-                except MqlError, e:
-                    vError(sRequest, e)
-                else:
-                    vInfo(sRequest, gRetval)
-                continue
 
             # really need to fire this of in a thread
             # and block waiting for it to appear on
             # the retval queue
             while len(dPENDING.keys()) > 0:
                 # zmq.NOBLOCK gives zmq.error.Again: Resource temporarily unavailable
-                sString = oReceiverSubSocket.recv()
+                sTopic, sString = oReceiverSubSocket.recv_multipart()
                 if not sString: continue
-                if lOptions and lOptions.iVerbose >= 2:
-                    vDebug("" + sString + "|" + sMakeMark())
                 
                 if sString.startswith('tick'):
                     print sString
                 elif sString.startswith('timer'):
                     print sString
                 elif sString.startswith('retval'):
+                    lElts = sString.split('|')
+                    if len(lElts) <= 4:
+                        vWarn("not enough | found in: %s" % (sString,))
+                        continue
+                    print sString
+
+                    sMarkOut = lElts[3]
+                    if sMarkOut not in dPENDING.keys():
+                        print "WARN: %s not found in: %r" % (sMarkOut, dPENDING.keys())
+                        continue
+                    del dPENDING[sMarkOut]
+                        
                     try:
-                        gRetval = gRetvalToPython(sString, sMarkIn)
+                        gRetval = gRetvalToPython(sString, lElts)
                     except MqlError, e:
                         vError(sRequest, e)
                     else:
-                        vInfo(sRequest, gRetval)
+                        print gRetval
                 else:
                     vWarn("Unrecognized message: " + sString)
 

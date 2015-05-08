@@ -33,7 +33,6 @@ double fPY_ZMQ_CONTEXT_USERS = 0.0;
 
 string uSYMBOL;
 int iTIMEFRAME;
-int iACCNUM;
 
 int iTICK=0;
 int iBAR=1;
@@ -48,14 +47,6 @@ string uSafeString(string uSymbol) {
 }
 string uCHART_ID = uChartName(uSafeString(Symbol()), Period(), ChartID(), iIsEA);
 double fDebugLevel=0;
-
-#include <WinUser32.mqh>
-void vPanic(string uReason) {
-    "A panic prints an error message and then aborts";
-    vError("PANIC: " + uReason);
-    MessageBox(uReason, "PANIC!", MB_OK|MB_ICONEXCLAMATION);
-    ExpertRemove();
-}
 
 int OnInit() {
     int iRetval;
@@ -82,23 +73,15 @@ int OnInit() {
 	
 	uSYMBOL=Symbol();
 	iTIMEFRAME=Period();
-	iACCNUM=AccountNumber();
     
 	uArg="import zmq";
-	vPyExecuteUnicode(uArg);
-	// VERY IMPORTANT: if the import failed we MUST PANIC
-	vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
-	uRetval=uPyEvalUnicode("sFoobar");
-	if (StringFind(uRetval, "exceptions.SystemError", 0) >= 0) {
-	    // Were seeing this during testing after an uninit 2 reload
-	    uRetval = "PANIC: import zmq failed - we MUST restart Mt4:"  + uRetval;
-	    vPanic(uRetval);
+	iRetval = iPySafeExec(uArg);
+	if (iRetval <= -2) {
+	    // VERY IMPORTANT: if the ANYTHING fails with SystemError we MUST PANIC
+	    ExpertRemove();
 	    return(-2);
-	}
-	if (StringFind(uRetval, "Error", 0) >= 0) {
-	    uRetval = "PANIC: import pyzmq failed:"  + uRetval;
-	    vPanic(uRetval);
-	    return(-2);
+	} else if (iRetval <= -1) {
+	    return(-1);
 	}
 	vPyExecuteUnicode("from OTMql427 import ZmqChart");
 	vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
@@ -114,6 +97,7 @@ int OnInit() {
 	    vPanic(uRetval);
 	    return(-3);
 	}
+	Comment(uCHART_ID);
 			  
 	iCONTEXT = iPyEvalInt("id(ZmqChart.oCONTEXT)");
 	GlobalVariableTemp("fPyZmqContext");
@@ -188,7 +172,7 @@ void OnTimer() {
 	    // if the command is cmd|  - return a value as a retval|
 	    // We want the sMark from uRetval instead of uTime
 	    // but we will do than in Python
-	    uMark = "0";
+	    uMark = "";
 	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, uMark, uMess);
 	    eSendOnSpeaker("retval", uMess, uRetval);
 	    vDebug("OnTimer: retvaled " +uMess);
@@ -298,5 +282,6 @@ void OnDeinit(const int iReason) {
     
     vDebug("OnDeinit: delete of the chart in Python");
     vPyExecuteUnicode(uCHART_ID +".vRemove()");    
+    Comment("");
 
 }

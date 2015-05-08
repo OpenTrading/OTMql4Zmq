@@ -95,7 +95,18 @@ class ZmqChart(Mq4Chart):
                 oListenerSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
             self.oListenerSubSocket = oListenerSubSocket
 
-    def eSendOnSpeaker(self, sTopic, sMsg):
+    def eSendOnSpeaker(self, sTopic, sMsg, sOrigin=None):
+        if sOrigin:
+	    # This message is a reply in a cmd
+            lOrigin = sOrigin.split("|")
+            assert lOrigin[0] in ['exec', 'cmd'], repr(lOrigin)
+            sMark = lOrigin[3]
+            lMsg = sMsg.split("|")
+            assert lMsg[0] == 'retval', repr(lMsg)
+            lMsg[3] = sMark
+	    # Replace the mark in the reply with the mark in the cmd
+            sMsg = '|'.join(lMsg)
+            
         if self.oSpeakerPubSocket is None:
             self.eBindSpeaker()
         assert self.oSpeakerPubSocket

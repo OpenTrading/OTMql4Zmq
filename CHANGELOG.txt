@@ -1,3 +1,11 @@
+commit 81fff96b785fd33b9a026323b10f4d346e9a0aa0
+Date:   Fri May 8 16:41:34 2015 +0300
+
+    Refactored the PyZmq to be more like OTMql4ZMQP.
+    It's working fine for Mt4 sending tick, bar and timer events.
+    Added a script bin/OTZmqPublish.py to test publishing messages
+    back to PyZmq Mt4 - not working yet.
+
 commit 03a50d15fad1d8d6c28bcbdc508c2668f663fc69
 Date:   Thu May 7 00:53:42 2015 +0300
 

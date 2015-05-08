@@ -25,11 +25,13 @@ There are now to ways of using ZeroMq via in this package:
 2. Through `pyzmq` in Python under Metatrader using OTMql4Py
    https://github.com/OpenTrading/OTMql4Py/
 
-We are having problems with both of them, where the communications
+We are having problems with the compiled DLL them, where the communications
 are partially corrupt for Mt4 publishing information, and messages received
-by Mt4 crash the terminal application. You may also want to look at
-our RabbitMQ solution, which is a pure Python solution using OTMql4Py:
-https://github.com/OpenTrading/OTMql4AMQP/, which works without issues.
+by Mt4 crash the terminal application. PyZmq is working fine in both directions.
+
+You may also want to look at our RabbitMQ solution,
+which is a pure Python solution using OTMql4Py and also works without issues:
+https://github.com/OpenTrading/OTMql4AMQP/
 
 #### Project History
 
