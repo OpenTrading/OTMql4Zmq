@@ -4,13 +4,8 @@ PyZMQ is the official Python binding for the ZeroMQ Messaging Library
 and can be found at https://pypi.python.org/pypi/pyzmq 
 The project's Home Page is at http://github.com/zeromq/pyzmq
 
-It can be used to run a subscriber or publisher from outside of
-Metatrader, to receive or send information. It requires
-the OpenTrading Metatrader-Python bridge
-https://github.com/OpenTrading/OTMql4Py/
-
-For example of using `pyzmq` instead of the compiled DLL, see
-`MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4`
+It can be used to run a subscriber or publisher from outside of Mt4,
+to receive or send information from either compiled DLL or PyZmq.
 
 ### Installation
 

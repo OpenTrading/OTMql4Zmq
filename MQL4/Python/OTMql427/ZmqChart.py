@@ -12,6 +12,7 @@ as arguments to this script, or --help to see the options.
 
 import sys, logging
 import time
+import traceback
 import zmq
 
 oLOG = logging
@@ -29,66 +30,106 @@ class ZmqChart(Mq4Chart):
         Mq4Chart.__init__(self, sChartId, dParams)
         if oCONTEXT is None:
             oCONTEXT = zmq.Context()
-        self.oSpeakerPubsubSocket = None
-        self.oListenerReqrepSocket = None
+        self.oSpeakerPubSocket = None
+        self.oListenerSubSocket = None
         self.iSpeakerPort = dParams.get('iSpeakerPort', 0)
         self.iListenerPort = dParams.get('iListenerPort', 0)
         self.sIpAddress = dParams.get('sIpAddress', '127.0.0.1')
+        self.sChartId = sChartId
 
+    def eHeartBeat(self, iTimeout=0):
+        """
+        The heartbeat is usually called from the Mt4 OnTimer.
+        We push a simple Print exec command onto the queue of things
+        for Mt4 to do if there's nothing else happening. This way we get 
+        a message in the Mt4 Log,  but with a string made in Python.
+        """
+        # while we are here flush stdout so we can read the log file
+        # whilst the program is running
+        print "recving on the listener "
+        sys.stdout.flush()
+        try:
+            sBody = self.sRecvOnListener()
+        except Exception , e:
+            print "error on the listener "+str(e)
+            print traceback.format_exc()
+            sys.stdout.flush()
+            raise
+        if sBody:
+            print "pushing on the queue " + sBody
+            self.eMq4PushQueue(sBody)
+        elif self.oQueue.empty():
+            sTopic = 'exec'
+            sMark = "%15.5f" % time.time()
+            sMess = "%s|%s|0|%s|Print|PY: %s" % (sTopic, self.sChartId, sMark, sMark,)
+            print "only pushing on the queue as there is nothing to do"
+            sys.stdout.flush()
+            self.eMq4PushQueue(sMess)
+            
     def eBindSpeaker(self):
         """
         We bind on this Metatrader end, and connect from the scripts.
         """
-        if self.oSpeakerPubsubSocket is None:
-            oSpeakerPubsubSocket = oCONTEXT.socket(zmq.PUB)
+        if self.oSpeakerPubSocket is None:
+            oSpeakerPubSocket = oCONTEXT.socket(zmq.PUB)
             assert self.iSpeakerPort
-            oSpeakerPubsubSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iSpeakerPort,))
+            oSpeakerPubSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iSpeakerPort,))
             time.sleep(0.1)
-            self.oSpeakerPubsubSocket = oSpeakerPubsubSocket
+            self.oSpeakerPubSocket = oSpeakerPubSocket
 
     def eBindListener(self):
         """
         We bind on our Metatrader end, and connect from the scripts.
         """
-        if self.oListenerReqrepSocket is None:
-            oListenerReqrepSocket = oCONTEXT.socket(zmq.REP)
+        if self.oListenerSubSocket is None:
+            print "creating a listener SUB socket " 
+            sys.stdout.flush()
+            oListenerSubSocket = oCONTEXT.socket(zmq.SUB)
             assert self.iListenerPort
-            oListenerReqrepSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iListenerPort,))
+            sUrl = 'tcp://%s:%d' % (self.sIpAddress, self.iListenerPort,)
+            print "Binding SUB to " + sUrl
+            sys.stdout.flush()
+            oListenerSubSocket.bind(sUrl)
             time.sleep(0.1)
-            self.oListenerReqrepSocket = oListenerReqrepSocket
+            for sElt in ['cmd', 'exec']:
+                oListenerSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
+            self.oListenerSubSocket = oListenerSubSocket
 
     def eSendOnSpeaker(self, sTopic, sMsg):
-        if self.oSpeakerPubsubSocket is None:
+        if self.oSpeakerPubSocket is None:
             self.eBindSpeaker()
-        assert self.oSpeakerPubsubSocket
-        self.oSpeakerPubsubSocket.send_multipart([sTopic, sMsg])
+        assert self.oSpeakerPubSocket
+        self.oSpeakerPubSocket.send_multipart([sTopic, sMsg])
         return ""
 
     def sRecvOnListener(self):
-        if self.oListenerReqrepSocket is None:
+        if self.oListenerSubSocket is None:
             self.eBindListener()
-        assert self.oSpeakerPubsubSocket
-        # non-blocking
-        sRetval = self.oListenerReqrepSocket.recv()
+        assert self.oListenerSubSocket
+        print "Recv on non-blocking listener"
+        sys.stdout.flush()
+        try:
+            sTopic, sRetval = self.oListenerSubSocket.recv_multipart(flags=zmq.NOBLOCK)
+            # sRetval = self.oListenerSubSocket.recv(flags=zmq.NOBLOCK)
+            print "Recved on non-blocking listener: " +sRetval
+            sys.stdout.flush()
+        except Exception, e:
+            # zmq.error.Again in 4.0.5 but not here
+            print "Failed Recv listener: " +str(e)
+            sys.stdout.flush()
+            sRetval = ""
         return sRetval
-
-    def eSendOnListener(self, sMsg):
-        if self.oListenerReqrepSocket is None:
-            self.eBindListener()
-        assert self.oSpeakerPubsubSocket
-        self.oListenerReqrepSocket.send(sMsg)
-        return ""
 
     def bCloseContextSockets(self, lOptions):
         global oCONTEXT
-        if self.oListenerReqrepSocket:
-            self.oListenerReqrepSocket.setsockopt(zmq.LINGER, 0)
+        if self.oListenerSubSocket:
+            self.oListenerSubSocket.setsockopt(zmq.LINGER, 0)
             time.sleep(0.1)
-            self.oListenerReqrepSocket.close()
-        if self.oSpeakerPubsubSocket:
-            self.oSpeakerPubsubSocket.setsockopt(zmq.LINGER, 0)
+            self.oListenerSubSocket.close()
+        if self.oSpeakerPubSocket:
+            self.oSpeakerPubSocket.setsockopt(zmq.LINGER, 0)
             time.sleep(0.1)
-            self.oSpeakerPubsubSocket.close()
+            self.oSpeakerPubSocket.close()
         if lOptions and lOptions.iVerbose >= 1:
             print("INFO: destroying the context")
         sys.stdout.flush()
@@ -98,26 +139,11 @@ class ZmqChart(Mq4Chart):
         return True
 
 def iMain():
-    from optparse import OptionParser
-    oParser = OptionParser(usage=__doc__.strip())
-    oParser.add_option("-p", "--pubport", action="store",
-                       dest="sPubPort", type="string",
-                       default="2027",
-                       help="the TCP port number to publish to (default 2027)")
-    oParser.add_option("-a", "--address", action="store",
-                       dest="sIpAddress", type="string",
-                       default="127.0.0.1",
-                       help="the TCP address to subscribe on (default 127.0.0.1)")
-    oParser.add_option("-v", "--verbose", action="store",
-                       dest="iVerbose", type="string",
-                       default="1",
-                       help="the verbosity, 0 for silent 4 max (default 1)")
-    oParser.add_option("-t", "--topic", action="store",
-                       dest="sTopic", type="string",
-                       default="retval",
-                       help="the topic the subcriber will be lokking for (default retval)")
-
-    (lOptions, lArgs) = oParser.parse_args()
+    from ZmqArguments import oParseOptions 
+    sUsage = __doc__.strip()
+    oArgParser = oParseOptions(sUsage)
+    oOptions = oArgParser.parse_args()
+    lArgs = oOptions.lArgs
 
     assert lArgs
     iSpeakerPort = int(lOptions.sPubPort)
@@ -129,7 +155,7 @@ def iMain():
         if lOptions.iVerbose >= 1:
             print "Publishing to: " +sIpAddress +":" +str(iSpeakerPort) + \
                 " with topic: " +lOptions.sTopic +" ".join(lArgs)
-        o = ZmqChart('Mt4', 0, 0, iSpeakerPort=iSpeakerPort, sIpAddress=sIpAddress)
+        o = ZmqChart('oUSDUSD_0_ZMQ_0', **oOptions.__dict__)
         sMsg = 'Hello'
         iMax = 10
         i = 0

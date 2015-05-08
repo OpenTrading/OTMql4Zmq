@@ -22,7 +22,8 @@ Change to suit your own needs.
 
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>
-//#include <OTMql4/OTZmqProcessCmd.mqh>
+#include <OTMql4/OTZmqProcessCmd.mqh>
+#include <OTMql4/OTLibSimpleFormatCmd.mqh>
 #include <OTMql4/OTLibPy27.mqh>
 //unused #include <OTMql4/OTPyZmq.mqh>
 
@@ -38,12 +39,15 @@ int iTICK=0;
 int iBAR=1;
 
 int iIsEA=1;
-string uCHART_ID="";
-double fDebugLevel=0;
-
-string uOTPyZmqProcessCmd(string uCmd) {
-    return("");
+string uSafeString(string uSymbol) {
+    uSymbol = uStringReplace(uSymbol, "!", "");
+    uSymbol = uStringReplace(uSymbol, "#", "");
+    uSymbol = uStringReplace(uSymbol, "-", "");
+    uSymbol = uStringReplace(uSymbol, ".", "");
+    return(uSymbol);
 }
+string uCHART_ID = uChartName(uSafeString(Symbol()), Period(), ChartID(), iIsEA);
+double fDebugLevel=0;
 
 #include <WinUser32.mqh>
 void vPanic(string uReason) {
@@ -51,14 +55,6 @@ void vPanic(string uReason) {
     vError("PANIC: " + uReason);
     MessageBox(uReason, "PANIC!", MB_OK|MB_ICONEXCLAMATION);
     ExpertRemove();
-}
-
-string uSafeString(string uSymbol) {
-    uSymbol = uStringReplace(uSymbol, "!", "");
-    uSymbol = uStringReplace(uSymbol, "#", "");
-    uSymbol = uStringReplace(uSymbol, "-", "");
-    uSymbol = uStringReplace(uSymbol, ".", "");
-    return(uSymbol);
 }
 
 int OnInit() {
@@ -99,9 +95,12 @@ int OnInit() {
 	    vPanic(uRetval);
 	    return(-2);
 	}
+	if (StringFind(uRetval, "Error", 0) >= 0) {
+	    uRetval = "PANIC: import pyzmq failed:"  + uRetval;
+	    vPanic(uRetval);
+	    return(-2);
+	}
 	vPyExecuteUnicode("from OTMql427 import ZmqChart");
-	//? add iACCNUM +"|" ? It may change during the charts lifetime
-	uCHART_ID = uChartName(uSafeString(uSYMBOL), iTIMEFRAME, ChartID(), iIsEA);
 	vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
 			  "iSpeakerPort=" + iSEND_PORT + ", " +
 			  "iListenerPort=" + iRECV_PORT + ", " +
@@ -124,9 +123,10 @@ int OnInit() {
 	
     }
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
+    
+    EventSetTimer(iTIMER_INTERVAL_SEC);
     vDebug("OnInit: fPyZmqContextUsers=" + fPY_ZMQ_CONTEXT_USERS);
 
-    EventSetTimer(iTIMER_INTERVAL_SEC);
     return (0);
 }
 
@@ -139,6 +139,9 @@ void OnTimer() {
     string uRetval="";
     string uMessage;
     string uMess;
+    string uInfo;
+    string uType = "timer";
+    string uMark;
 
     /* timer events can be called before we are ready */
     if (GlobalVariableCheck("fPyZmqContextUsers") == false) {
@@ -146,101 +149,63 @@ void OnTimer() {
     }
     iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
     if (iCONTEXT < 1) {
-	vWarn("OnTick: unallocated context");
+	vWarn("OnTimer: unallocated context");
         return;
     }
-
-    // same as Time[0] - the bar time not the real time
+    vTrace("OnTimer: iCONTEXT=" +iCONTEXT);
+    
+    // FixMe: could use GetTickCount but we may not be logged in
+    // but maybe TimeCurrent requires us to be logged in?
+    string uTime = IntegerToString(TimeCurrent());
+    // same as Time[0]
     datetime tTime=iTime(uSYMBOL, iTIMEFRAME, 0);
-    string sTime = TimeToStr(tTime, TIME_DATE|TIME_MINUTES) + " ";
-    string uType = "timer";
 	
-    uMess = iACCNUM +"|" +uSYMBOL +"|" +iTIMEFRAME +"|" + sTime;
-
-    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
+    uInfo = "0";
+    uRetval = uPySafeEval(uCHART_ID+".eHeartBeat(0)");
+    if (StringFind(uRetval, "ERROR: ", 0) >= 0) {
+	uRetval = "ERROR: eHeartBeat failed: "  + uRetval;
 	vWarn("OnTimer: " +uRetval);
 	return;
     }
-    // the uRetval should be empty - otherwise its an error
-    if (uRetval == "") {
-	vDebug("OnTimer: " +uRetval);
-    } else {
+    // There may be sleeps for threads here
+    // We may want to loop over zMq4PopQueue to pop many commands
+    uRetval = uPySafeEval(uCHART_ID+".zMq4PopQueue()");
+    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
+	uRetval = "ERROR: zMq4PopQueue failed: "  + uRetval;
 	vWarn("OnTimer: " +uRetval);
-    }
-    /*
-      We listen on every timer as well as every tick
-      to make sure the channel is still responsive 
-      even when the market is closed or there is no connection.
-    */
-    vListen();
-}
-
-void vListen() {
-    string uRetval, uMsg, uDeferMsg, uMess;
-    string uType="retval";
-    
-    uMsg = uPySafeEval(uCHART_ID+".sRecvOnListener()");
-    if (StringFind(uMsg, "ERROR:", 0) >= 0) {
-	uMsg = "ERROR: sRecvOnListener " +" failed: "  + uMsg;
-	vWarn("vListen: " +uMsg);
 	return;
     }
 
-    vDebug("vListen: got" +uMsg);
-    // the uMsg may be empty - we are non-blocking
-    if (uMsg == "") {
-	uRetval = "";
-    } else if (StringFind(uMsg, "exec", 0) == 0) {
-	// execs are executed immediately and return a result on the wire
-	// They're things that take less than a tick to evaluate
-	//vTrace("Processing immediate exec message: " + uMsg);
-	uRetval = uOTPyZmqProcessCmd(uMsg);
-    } else if (StringFind(uMsg, "cmd", 0) == 0) {
-	uDeferMsg = uMsg;
-	uRetval = "";
-    } else {
-        vError("Internal error, not cmd or exec: " + uMsg);
-	uRetval = "";
-    }
-	
-    uRetval = uPySafeEval(uCHART_ID+".eSendOnListener('retval|" + uRetval +"')");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	uRetval = "ERROR: eSendOnListener " +" failed: "  + uRetval;
-	vWarn("vListen: " +uRetval);
-	return;
-    }
-    // unused: if uRetval != ""
-
-    //? maybe should sleep a second here to let the REP go back?
-    Sleep(1000);
-    
-    vTrace("Processing defered cmd message: " + uDeferMsg);
-    uMess = uOTPyZmqProcessCmd(uDeferMsg);
-    
-    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
-	vWarn("vTick: " +uRetval);
-	return;
-    }
-    // the uRetval should be empty - otherwise its an error
+    // the uRetval will be empty if there is nothing to do.
     if (uRetval == "") {
-	vDebug("vTick: " +uRetval);
-	//? maybe should sleep a second here to let the PUB go?
-	Sleep(1000);
+	//vTrace("OnTimer: " +uRetval);
     } else {
-	vWarn("vTick: " +uRetval);
+	vDebug("OnTimer: Processing popped exec message: " + uRetval);
+	uMess = zOTZmqProcessCmd(uRetval);
+	if (uMess == "void|") {
+	    // can be "void|" return value
+	} else if (StringFind(uRetval, "cmd", 0) == 0) {
+	    // if the command is cmd|  - return a value as a retval|
+	    // We want the sMark from uRetval instead of uTime
+	    // but we will do than in Python
+	    uMark = "0";
+	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, uMark, uMess);
+	    eSendOnSpeaker("retval", uMess, uRetval);
+	    vDebug("OnTimer: retvaled " +uMess);
+	} else {
+	    // if the command is exec| - dont return a value
+	    vDebug("OnTimer: processed " +uMess);
+	}
     }
+    
+    uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
+    eSendOnSpeaker("timer", uMess);
 }
-	
+
 void OnTick() {
     static datetime tNextbartime;
-
     bool bNewBar=false;
     string uType;
-    bool bRetval;
     string uInfo;
     string uMess, uRetval;
 
@@ -255,9 +220,11 @@ void OnTick() {
         return;
     }
 
+    // FixMe: could use GetTickCount but we may not be logged in
+    // but maybe TimeCurrent requires us to be logged in?
+    string uTime = IntegerToString(TimeCurrent());
     // same as Time[0]
-    datetime tTime=iTime(uSYMBOL, iTIMEFRAME, 0);
-    string sTime = TimeToStr(tTime, TIME_DATE|TIME_MINUTES) + " ";
+    datetime tTime = iTime(uSYMBOL, iTIMEFRAME, 0);
 
     if (tTime != tNextbartime) {
         iBAR += 1; // = Bars - 100
@@ -273,44 +240,52 @@ void OnTick() {
 	uType = "tick";
     }
 
-    uMess  = iACCNUM +"|" +uSYMBOL +"|" +iTIMEFRAME +"|" +Bid +"|" +Ask +"|" +uInfo +"|" +sTime;
-
-    uRetval = uPySafeEval(uCHART_ID+".eSendOnSpeaker('" +uType +"', '" +uMess +"')");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	uRetval = "ERROR: eSendOnSpeaker " +uType +" failed: "  + uRetval;
-	vWarn("OnTick: " +uRetval);
-	return;
-    }
-    // the retval should be empty - otherwise its an error
-    if (uRetval == "") {
-	vDebug("OnTick: " +uRetval);
-    } else {
-	vWarn("OnTick: " +uRetval);
-    }
+    uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
+    eSendOnSpeaker(uType, uMess);
     
-    /*
-      We listen on every timer as well as every tick
-      to make sure the channel is still responsive 
-      even when the market is closed or there is no connection.
-    */
-    vListen();
+}
+
+void eSendOnSpeaker(string uType, string uMess, string uOriginCmd="") {
+    string uRetval;
+    if (uOriginCmd == "") {
+	uMess = uCHART_ID +".eSendOnSpeaker('" +uType +"', '" +uMess +"')";
+    } else {
+	// This message is a reply in a cmd
+	uMess = uCHART_ID +".eSendOnSpeaker('" +uType +"', '" +uMess
+	    +"', '" +uOriginCmd +"')";
+    }
+    //vTrace("eSendOnSpeaker:  uMess: " +uMess);
+    // the retval should be empty - otherwise its an error
+    vPyExecuteUnicode(uMess);
+    vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
+    uRetval=uPyEvalUnicode("sFoobar");
+    if (StringFind(uRetval, "exceptions", 0) >= 0) {
+	vWarn("eSendOnSpeaker: ERROR: " +uRetval);
+	return;
+    } else if (uRetval != " : ") {
+	vDebug("eSendOnSpeaker:  WTF?" +uMess);
+    } else {
+	// pass
+    }
 }
 
 void OnDeinit(const int iReason) {
     //? if (iReason == INIT_FAILED) { return ; }
+    vTrace("OnDeinit: killing the timer");
     EventKillTimer();
-    
+
     fPY_ZMQ_CONTEXT_USERS=GlobalVariableGet("fPyZmqContextUsers");
     if (fPY_ZMQ_CONTEXT_USERS < 1.5) {
 	iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
 	if (iCONTEXT < 1) {
 	    vWarn("OnDeinit: unallocated context");
 	} else {
+	    vInfo("OnDeinit: destroying the context");
 	    vPyExecuteUnicode("ZmqChart.oCONTEXT.destroy()");
 	    vPyExecuteUnicode("ZmqChart.oCONTEXT = None");
 	}
 	GlobalVariableDel("fPyZmqContext");
-
+	
 	GlobalVariableDel("fPyZmqContextUsers");
 	vDebug("OnDeinit: deleted fPyZmqContextUsers");
 	
@@ -321,5 +296,7 @@ void OnDeinit(const int iReason) {
 	vDebug("OnDeinit: decreased, value of fPyZmqContextUsers to: " + fPY_ZMQ_CONTEXT_USERS);
     }
     
+    vDebug("OnDeinit: delete of the chart in Python");
+    vPyExecuteUnicode(uCHART_ID +".vRemove()");    
 
 }

@@ -1,3 +1,8 @@
+commit 03a50d15fad1d8d6c28bcbdc508c2668f663fc69
+Date:   Thu May 7 00:53:42 2015 +0300
+
+    Refactored the Simple message format.
+
 commit 25ab5d7e6c2fb5966a04707010c8c3fd8bb1bcc3
 Date:   Wed May 6 16:33:07 2015 +0300
 
