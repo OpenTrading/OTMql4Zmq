@@ -72,7 +72,7 @@ class ZmqChart(Mq4Chart):
         """
         if self.oSpeakerPubSocket is None:
             oSpeakerPubSocket = oCONTEXT.socket(zmq.PUB)
-            assert self.iSpeakerPort
+            assert self.iSpeakerPort, "eBindSpeaker: iSpeakerPort is null"
             oSpeakerPubSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iSpeakerPort,))
             time.sleep(0.1)
             self.oSpeakerPubSocket = oSpeakerPubSocket
@@ -85,7 +85,7 @@ class ZmqChart(Mq4Chart):
             print "creating a listener SUB socket " 
             sys.stdout.flush()
             oListenerSubSocket = oCONTEXT.socket(zmq.SUB)
-            assert self.iListenerPort
+            assert self.iListenerPort, "eBindListener: iListenerPort is null"
             sUrl = 'tcp://%s:%d' % (self.sIpAddress, self.iListenerPort,)
             print "Binding SUB to " + sUrl
             sys.stdout.flush()
@@ -99,24 +99,24 @@ class ZmqChart(Mq4Chart):
         if sOrigin:
 	    # This message is a reply in a cmd
             lOrigin = sOrigin.split("|")
-            assert lOrigin[0] in ['exec', 'cmd'], repr(lOrigin)
+            assert lOrigin[0] in ['exec', 'cmd'], "eSendOnSpeaker: lOrigin[0] in ['exec', 'cmd'] " +repr(lOrigin)
             sMark = lOrigin[3]
             lMsg = sMsg.split("|")
-            assert lMsg[0] == 'retval', repr(lMsg)
+            assert lMsg[0] == 'retval', "eSendOnSpeaker: lMsg[0] in ['retval'] " +repr(lMsg)
             lMsg[3] = sMark
 	    # Replace the mark in the reply with the mark in the cmd
             sMsg = '|'.join(lMsg)
             
         if self.oSpeakerPubSocket is None:
             self.eBindSpeaker()
-        assert self.oSpeakerPubSocket
+        assert self.oSpeakerPubSocket, "eSendOnSpeaker: oSpeakerPubSocket is null"
         self.oSpeakerPubSocket.send_multipart([sTopic, sMsg])
         return ""
 
     def sRecvOnListener(self):
         if self.oListenerSubSocket is None:
             self.eBindListener()
-        assert self.oListenerSubSocket
+        assert self.oListenerSubSocket, "sRecvOnListener: oListenerSubSocket is null"
         print "Recv on non-blocking listener"
         sys.stdout.flush()
         try:
@@ -156,7 +156,7 @@ def iMain():
     oOptions = oArgParser.parse_args()
     lArgs = oOptions.lArgs
 
-    assert lArgs
+    assert lArgs, "comand line arguments are required"
     iSpeakerPort = int(lOptions.sPubPort)
     assert iSpeakerPort > 0 and iSpeakerPort < 66000
     sIpAddress = lOptions.sIpAddress

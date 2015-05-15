@@ -25,7 +25,7 @@ Change to suit your own needs.
 #include <OTMql4/OTZmqProcessCmd.mqh>
 #include <OTMql4/OTLibSimpleFormatCmd.mqh>
 #include <OTMql4/OTLibPy27.mqh>
-//unused #include <OTMql4/OTPyZmq.mqh>
+#include <OTMql4/OTPyChart.mqh>
 
 int iTIMER_INTERVAL_SEC = 10;
 int iCONTEXT = -1;
@@ -58,53 +58,53 @@ int OnInit() {
         fPY_ZMQ_CONTEXT_USERS = 0.0;
     }
     if (fPY_ZMQ_CONTEXT_USERS > 0.1) {
-	iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
-	if (iCONTEXT < 1) {
-	    vError("OnInit: unallocated context");
-	    return(-1);
-	}
+        iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
+        if (iCONTEXT < 1) {
+            vError("OnInit: unallocated context");
+            return(-1);
+        }
         fPY_ZMQ_CONTEXT_USERS += 1.0;
     } else {
-	iRetval = iPyInit(uStdOutFile);
-	if (iRetval != 0) {
-	    return(iRetval);
-	}
-	Print("Called iPyInit successfully");
-	
-	uSYMBOL=Symbol();
-	iTIMEFRAME=Period();
+        iRetval = iPyInit(uStdOutFile);
+        if (iRetval != 0) {
+            return(iRetval);
+        }
+        Print("Called iPyInit successfully");
+        
+        uSYMBOL=Symbol();
+        iTIMEFRAME=Period();
     
-	uArg="import zmq";
-	iRetval = iPySafeExec(uArg);
-	if (iRetval <= -2) {
-	    // VERY IMPORTANT: if the ANYTHING fails with SystemError we MUST PANIC
-	    ExpertRemove();
-	    return(-2);
-	} else if (iRetval <= -1) {
-	    return(-1);
-	}
-	vPyExecuteUnicode("from OTMql427 import ZmqChart");
-	vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
-			  "iSpeakerPort=" + iSEND_PORT + ", " +
-			  "iListenerPort=" + iRECV_PORT + ", " +
-			  "sIpAddress='" + uBIND_ADDRESS + "', " +
-			  "iDebugLevel=" + MathRound(fDebugLevel) + ", " +
-			  ")");
-	vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
-	uRetval = uPySafeEval("sFoobar");
-	if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	    uRetval = "ERROR: ZmqChart.ZmqChart failed: "  + uRetval;
-	    vPanic(uRetval);
-	    return(-3);
-	}
-	Comment(uCHART_ID);
-			  
-	iCONTEXT = iPyEvalInt("id(ZmqChart.oCONTEXT)");
-	GlobalVariableTemp("fPyZmqContext");
-	GlobalVariableSet("fPyZmqContext", iCONTEXT);
-	
+        uArg="import zmq";
+        iRetval = iPySafeExec(uArg);
+        if (iRetval <= -2) {
+            // VERY IMPORTANT: if the ANYTHING fails with SystemError we MUST PANIC
+            ExpertRemove();
+            return(-2);
+        } else if (iRetval <= -1) {
+            return(-1);
+        }
+        vPyExecuteUnicode("from OTMql427 import ZmqChart");
+        vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
+                          "iSpeakerPort=" + iSEND_PORT + ", " +
+                          "iListenerPort=" + iRECV_PORT + ", " +
+                          "sIpAddress='" + uBIND_ADDRESS + "', " +
+                          "iDebugLevel=" + MathRound(fDebugLevel) + ", " +
+                          ")");
+        vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
+        uRetval = uPySafeEval("sFoobar");
+        if (StringFind(uRetval, "ERROR:", 0) >= 0) {
+            uRetval = "ERROR: ZmqChart.ZmqChart failed: "  + uRetval;
+            vPanic(uRetval);
+            return(-3);
+        }
+        Comment(uCHART_ID);
+                          
+        iCONTEXT = iPyEvalInt("id(ZmqChart.oCONTEXT)");
+        GlobalVariableTemp("fPyZmqContext");
+        GlobalVariableSet("fPyZmqContext", iCONTEXT);
+        
         fPY_ZMQ_CONTEXT_USERS = 1.0;
-	
+        
     }
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
     
@@ -112,6 +112,45 @@ int OnInit() {
     vDebug("OnInit: fPyZmqContextUsers=" + fPY_ZMQ_CONTEXT_USERS);
 
     return (0);
+}
+
+string ePyZmqPopQueue(string uChartId) {
+    string uRetval, uMess;
+    
+    // There may be sleeps for threads here
+    // We may want to loop over zMq4PopQueue to pop many commands
+    uRetval = uPySafeEval(uChartId+".zMq4PopQueue()");
+    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
+        uRetval = "ERROR: zMq4PopQueue failed: "  + uRetval;
+        vWarn("ePyZmqPopQueue: " +uRetval);
+        return(uRetval);
+    }
+
+    // the uRetval will be empty if there is nothing to do.
+    if (uRetval == "") {
+        //vTrace("ePyZmqPopQueue: " +uRetval);
+    } else {
+        vDebug("ePyZmqPopQueue: Processing popped exec message: " + uRetval);
+        uMess = zOTZmqProcessCmd(uRetval);
+        if (uMess == "void|") {
+            // can be "void|" return value
+        } else if (StringFind(uMess, "error|", 0) == 0) {
+            // can be "error|" return value
+            vWarn("ePyZmqPopQueue: ProcessCmd returned: " +uMess);
+            return(uMess);
+        } else if (StringFind(uRetval, "cmd", 0) == 0) {
+            // if the command is cmd|  - return a value as a retval|
+            // We want the sMark from uRetval instead of uTime
+            // but we will do than in Python
+            uMess  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "0", uMess);
+            eReturnOnSpeaker(uChartId, "retval", uMess, uRetval);
+            vDebug("ePyZmqPopQueue: retvaled " +uMess);
+        } else {
+            // if the command is exec| - dont return a value
+            vDebug("ePyZmqPopQueue: processed " +uMess);
+        }
+    }
+    return("");
 }
 
 /*
@@ -133,7 +172,7 @@ void OnTimer() {
     }
     iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
     if (iCONTEXT < 1) {
-	vWarn("OnTimer: unallocated context");
+        vWarn("OnTimer: unallocated context");
         return;
     }
     vTrace("OnTimer: iCONTEXT=" +iCONTEXT);
@@ -143,47 +182,22 @@ void OnTimer() {
     string uTime = IntegerToString(TimeCurrent());
     // same as Time[0]
     datetime tTime=iTime(uSYMBOL, iTIMEFRAME, 0);
-	
+        
     uInfo = "0";
     uRetval = uPySafeEval(uCHART_ID+".eHeartBeat(0)");
     if (StringFind(uRetval, "ERROR: ", 0) >= 0) {
-	uRetval = "ERROR: eHeartBeat failed: "  + uRetval;
-	vWarn("OnTimer: " +uRetval);
-	return;
+        uRetval = "ERROR: eHeartBeat failed: "  + uRetval;
+        vWarn("OnTimer: " +uRetval);
+        return;
     }
-    // There may be sleeps for threads here
-    // We may want to loop over zMq4PopQueue to pop many commands
-    uRetval = uPySafeEval(uCHART_ID+".zMq4PopQueue()");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-	uRetval = "ERROR: zMq4PopQueue failed: "  + uRetval;
-	vWarn("OnTimer: " +uRetval);
-	return;
-    }
-
-    // the uRetval will be empty if there is nothing to do.
-    if (uRetval == "") {
-	//vTrace("OnTimer: " +uRetval);
-    } else {
-	vDebug("OnTimer: Processing popped exec message: " + uRetval);
-	uMess = zOTZmqProcessCmd(uRetval);
-	if (uMess == "void|") {
-	    // can be "void|" return value
-	} else if (StringFind(uRetval, "cmd", 0) == 0) {
-	    // if the command is cmd|  - return a value as a retval|
-	    // We want the sMark from uRetval instead of uTime
-	    // but we will do than in Python
-	    uMark = "";
-	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, uMark, uMess);
-	    eSendOnSpeaker("retval", uMess, uRetval);
-	    vDebug("OnTimer: retvaled " +uMess);
-	} else {
-	    // if the command is exec| - dont return a value
-	    vDebug("OnTimer: processed " +uMess);
-	}
+    uRetval = ePyZmqPopQueue(uCHART_ID);
+    if (uRetval != "") {
+        vWarn("OnTimer: " +uRetval);
+        // drop through
     }
     
     uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
-    eSendOnSpeaker("timer", uMess);
+    eSendOnSpeaker(uCHART_ID, "timer", uMess);
 }
 
 void OnTick() {
@@ -195,12 +209,12 @@ void OnTick() {
 
     fPY_ZMQ_CONTEXT_USERS=GlobalVariableGet("fPyZmqContextUsers");
     if (fPY_ZMQ_CONTEXT_USERS < 0.5) {
-	vWarn("OnTick: no context users");
+        vWarn("OnTick: no context users");
         return;
     }
     iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
     if (iCONTEXT < 1) {
-	vWarn("OnTick: unallocated context");
+        vWarn("OnTick: unallocated context");
         return;
     }
 
@@ -212,45 +226,22 @@ void OnTick() {
 
     if (tTime != tNextbartime) {
         iBAR += 1; // = Bars - 100
-	bNewBar = true;
-	iTICK = 0;
-	tNextbartime = tTime;
-	uInfo = sBarInfo();
-	uType = "bar";
+        bNewBar = true;
+        iTICK = 0;
+        tNextbartime = tTime;
+        uInfo = sBarInfo();
+        uType = "bar";
+        uMess  = zOTLibSimpleFormatBar(uType, uCHART_ID, 0, uTime, uInfo);
     } else {
         bNewBar = false;
-	iTICK += 1;
-	uInfo = iTICK;
-	uType = "tick";
+        iTICK += 1;
+        uInfo = iTICK;
+        uType = "tick";
+        uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
 
-    uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
-    eSendOnSpeaker(uType, uMess);
+    eSendOnSpeaker(uCHART_ID, uType, uMess);
     
-}
-
-void eSendOnSpeaker(string uType, string uMess, string uOriginCmd="") {
-    string uRetval;
-    if (uOriginCmd == "") {
-	uMess = uCHART_ID +".eSendOnSpeaker('" +uType +"', '" +uMess +"')";
-    } else {
-	// This message is a reply in a cmd
-	uMess = uCHART_ID +".eSendOnSpeaker('" +uType +"', '" +uMess
-	    +"', '" +uOriginCmd +"')";
-    }
-    //vTrace("eSendOnSpeaker:  uMess: " +uMess);
-    // the retval should be empty - otherwise its an error
-    vPyExecuteUnicode(uMess);
-    vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
-    uRetval=uPyEvalUnicode("sFoobar");
-    if (StringFind(uRetval, "exceptions", 0) >= 0) {
-	vWarn("eSendOnSpeaker: ERROR: " +uRetval);
-	return;
-    } else if (uRetval != " : ") {
-	vDebug("eSendOnSpeaker:  WTF?" +uMess);
-    } else {
-	// pass
-    }
 }
 
 void OnDeinit(const int iReason) {
@@ -260,24 +251,24 @@ void OnDeinit(const int iReason) {
 
     fPY_ZMQ_CONTEXT_USERS=GlobalVariableGet("fPyZmqContextUsers");
     if (fPY_ZMQ_CONTEXT_USERS < 1.5) {
-	iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
-	if (iCONTEXT < 1) {
-	    vWarn("OnDeinit: unallocated context");
-	} else {
-	    vInfo("OnDeinit: destroying the context");
-	    vPyExecuteUnicode("ZmqChart.oCONTEXT.destroy()");
-	    vPyExecuteUnicode("ZmqChart.oCONTEXT = None");
-	}
-	GlobalVariableDel("fPyZmqContext");
-	
-	GlobalVariableDel("fPyZmqContextUsers");
-	vDebug("OnDeinit: deleted fPyZmqContextUsers");
-	
-	vPyDeInit();
+        iCONTEXT = MathRound(GlobalVariableGet("fPyZmqContext"));
+        if (iCONTEXT < 1) {
+            vWarn("OnDeinit: unallocated context");
+        } else {
+            vInfo("OnDeinit: destroying the context");
+            vPyExecuteUnicode("ZmqChart.oCONTEXT.destroy()");
+            vPyExecuteUnicode("ZmqChart.oCONTEXT = None");
+        }
+        GlobalVariableDel("fPyZmqContext");
+        
+        GlobalVariableDel("fPyZmqContextUsers");
+        vDebug("OnDeinit: deleted fPyZmqContextUsers");
+        
+        vPyDeInit();
     } else {
-	fPY_ZMQ_CONTEXT_USERS -= 1.0;
-	GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
-	vDebug("OnDeinit: decreased, value of fPyZmqContextUsers to: " + fPY_ZMQ_CONTEXT_USERS);
+        fPY_ZMQ_CONTEXT_USERS -= 1.0;
+        GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
+        vDebug("OnDeinit: decreased, value of fPyZmqContextUsers to: " + fPY_ZMQ_CONTEXT_USERS);
     }
     
     vDebug("OnDeinit: delete of the chart in Python");
