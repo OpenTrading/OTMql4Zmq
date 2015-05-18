@@ -1,3 +1,8 @@
+commit d8ee22d15f318f08d43f560f193f525f397b980e
+Date:   Fri May 15 11:29:11 2015 +0300
+
+    Refactoring to pull common code from OTMql4AMQP and OTMql4Zmq into OTMql4Py.
+
 commit 89a2f5de549cecfaeba3e4352f00502bac6d78d0
 Date:   Fri May 8 19:11:23 2015 +0300
 

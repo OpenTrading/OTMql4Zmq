@@ -41,7 +41,7 @@ bool bZmqSend(int iSpeaker, string uMessage) {
     // ALLOW null messages
 
     if (false) {
-        vTrace("bZmqSend: zmq_msg_init_size "+ uMessage + " length " + IntegerToString(iMessLen));
+        // vTrace("bZmqSend: zmq_msg_init_size "+ uMessage + " length " + IntegerToString(iMessLen));
         /*
           if (zmq_msg_init_size(response, iMessLen) == -1) {
           vError("error creating ZeroMQ message for size: " + uMessage);
@@ -54,7 +54,7 @@ bool bZmqSend(int iSpeaker, string uMessage) {
           RtlMoveMemory(iPointer, sCharArray, iMessLen);
         */
     } else {
-        vTrace("bZmqSend: zmq_msg_init_data "+ uMessage + " length " + IntegerToString(iMessLen));
+        // vTrace("bZmqSend: zmq_msg_init_data "+ uMessage + " length " + IntegerToString(iMessLen));
 
         // Select the pointer to use, Select the memory address of the data buffer to point to,
         // Set the length of the message pointer
@@ -97,7 +97,7 @@ string uZmqReceiveNew (int iListener) {
         vError("uZmqReceive: unallocated listener");
         return(-1);
     }
-    vTrace("uZmqReceive: Check for inbound message");
+    // vTrace("uZmqReceive: Check for inbound message");
     // Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
     //       we recieve a message. This is a problem as this function
     //       will effectively block the MQL4 'Start' function from firing
@@ -111,7 +111,7 @@ string uZmqReceiveNew (int iListener) {
     uMessage = s_recv(iListener, ZMQ_NOBLOCK);
     iMessageLength = StringLen(uMessage);
     if (iMessageLength > 0) {
-        vTrace("Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
+        // vTrace("Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
         
     }
 
@@ -129,7 +129,7 @@ string uZmqReceive (int iListener) {
         vError("uZmqReceive: unallocated listener");
         return(-1);
     }
-    vTrace("uZmqReceive: initialize iRequestPtr");
+    // vTrace("uZmqReceive: initialize iRequestPtr");
     zmq_msg_init(iRequestPtr);
     if ( iRequestPtr[0] < 1) {
         vError("zmq_msg_init(iRequestPtr) failed!");
@@ -146,23 +146,23 @@ string uZmqReceive (int iListener) {
     //       if (zmq_recv(iListener, iRequestPtr) != -1)
 
     // Will return -1 if no message was received.
-    vTrace("uZmqReceive: zmq_recv");
+    // vTrace("uZmqReceive: zmq_recv");
     if (zmq_recv(iListener, iRequestPtr, ZMQ_NOBLOCK) != -1) {
-        vTrace("uZmqReceive: Retrieve message size");
+        // vTrace("uZmqReceive: Retrieve message size");
         iMessageLength = zmq_msg_size(iRequestPtr);
         if (iMessageLength > 0) {
-            vTrace("uZmqReceive: Retrieve pointer to message data");
+            // vTrace("uZmqReceive: Retrieve pointer to message data");
             uMessage = zmq_msg_data(iRequestPtr);
 
             vDebug("uZmqReceive: Received message of zmq_msg_size: " + iMessageLength);
         
-            vTrace("uZmqReceive: Drop excess null's from the pointer.");
+            // vTrace("uZmqReceive: Drop excess null's from the pointer.");
             uMessage = StringSubstr(uMessage, 0, iMessageLength);
-            vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
+            // vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
         }
     }
 
-    vTrace("uZmqReceive: Deallocate iRequestPtr.");
+    // vTrace("uZmqReceive: Deallocate iRequestPtr.");
     zmq_msg_close(iRequestPtr);
 
     return(uMessage);

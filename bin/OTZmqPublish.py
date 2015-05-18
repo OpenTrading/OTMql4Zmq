@@ -21,6 +21,7 @@ It may prevent the expert from binding to the ports.
 
 """
 import sys
+import json
 import time
 from optparse import OptionParser
 
@@ -146,7 +147,7 @@ def gRetvalToPython(sString, lElts):
     if sVal == "":
         return ""
     if sType == 'string':
-        sRetval = sVal
+        gRetval = sVal
     elif sType == 'error':
         #? should I raise an error?
         raise MqlError(sVal)
@@ -156,19 +157,21 @@ def gRetvalToPython(sString, lElts):
         # but what TZ? TZ of the server?
         # I'll treat it as a float like time.time()
         # but probably better to convert it to datetime
-        sRetval = float(sVal)
+        gRetval = float(sVal)
     elif sType == 'int':
-        sRetval = int(sVal)
+        gRetval = int(sVal)
+    elif sType == 'json':
+        gRetval = json.loads(sVal)
     elif sType == 'double':
-        sRetval = float(sVal)
+        gRetval = float(sVal)
     elif sType == 'none':
-        sRetval = None
+        gRetval = None
     elif sType == 'void':
-        sRetval = None
+        gRetval = None
     else:
-        print "WARN: unkown type i=%s in %r" % (sType, lElts,)
+        print "WARN: unknown type i=%s in %r" % (sType, lElts,)
         return None
-    return sRetval
+    return gRetval
 
 def iMain():
     global dPENDING

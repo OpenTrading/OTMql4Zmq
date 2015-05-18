@@ -81,7 +81,7 @@ string zOTZmqProcessCmd(string uMess) {
     uArg5   = aArrayAsList[9];
     
     uKey = StringSubstr(uCmd, 0, 3);
-    vTrace("zOTZmqProcessCmd uKey: " +uKey +" uCmd: " +uCmd+ " uMark: " +uMark);
+    // vTrace("zOTZmqProcessCmd uKey: " +uKey +" uCmd: " +uCmd+ " uMark: " +uMark);
 
     if (uKey == "Zmq") {
         uRetval = uProcessCmdZmq(uCmd, uChartId, uIgnore, uArg1, uArg2, uArg3, uArg4, uArg5);

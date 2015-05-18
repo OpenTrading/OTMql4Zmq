@@ -11,28 +11,28 @@ extern int iRECV_PORT=2028;
 // can replace this with the IP address of an interface - not lo
 extern string uBIND_ADDRESS="127.0.0.1";
 extern string uStdOutFile="../../Logs/_test_PyTestZmqEA.txt";
+extern int iTIMER_INTERVAL_SEC = 10;
 
-#include <OTMql4/OTBarInfo.mqh>
 /*
-This provides the function sBarInfo which puts together the
+This provided the function uBarInfo which puts together the
 information you want send to a remote client on every bar.
 Change to suit your own needs.
+// #include <OTMql4/OTBarInfo.mqh>
 */
-#include <OTMql4/OTBarInfo.mqh>
 
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>
 #include <OTMql4/OTZmqProcessCmd.mqh>
 #include <OTMql4/OTLibSimpleFormatCmd.mqh>
+#include <OTMql4/OTLibJsonFormat.mqh>
 #include <OTMql4/OTLibPy27.mqh>
 #include <OTMql4/OTPyChart.mqh>
 
-int iTIMER_INTERVAL_SEC = 10;
 int iCONTEXT = -1;
 double fPY_ZMQ_CONTEXT_USERS = 0.0;
 
-string uSYMBOL;
-int iTIMEFRAME;
+string uSYMBOL = Symbol();
+int iTIMEFRAME = Period();
 
 int iTICK=0;
 int iBAR=1;
@@ -45,7 +45,7 @@ string uSafeString(string uSymbol) {
     uSymbol = uStringReplace(uSymbol, ".", "");
     return(uSymbol);
 }
-string uCHART_ID = uChartName(uSafeString(Symbol()), Period(), ChartID(), iIsEA);
+string uCHART_ID = uChartName(uSafeString(uSYMBOL), Period(), ChartID(), iIsEA);
 double fDebugLevel=0;
 
 int OnInit() {
@@ -71,9 +71,6 @@ int OnInit() {
         }
         Print("Called iPyInit successfully");
         
-        uSYMBOL=Symbol();
-        iTIMEFRAME=Period();
-    
         uArg="import zmq";
         iRetval = iPySafeExec(uArg);
         if (iRetval <= -2) {
@@ -181,9 +178,8 @@ void OnTimer() {
     // but maybe TimeCurrent requires us to be logged in?
     string uTime = IntegerToString(TimeCurrent());
     // same as Time[0]
-    datetime tTime=iTime(uSYMBOL, iTIMEFRAME, 0);
+    datetime tTime=iTime(uSYMBOL, Period(), 0);
         
-    uInfo = "0";
     uRetval = uPySafeEval(uCHART_ID+".eHeartBeat(0)");
     if (StringFind(uRetval, "ERROR: ", 0) >= 0) {
         uRetval = "ERROR: eHeartBeat failed: "  + uRetval;
@@ -196,7 +192,8 @@ void OnTimer() {
         // drop through
     }
     
-    uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
+    uInfo = "json|" + jOTTimerInformation();
+    uMess  = zOTLibSimpleFormatTimer(uType, uCHART_ID, 0, uTime, uInfo);
     eSendOnSpeaker(uCHART_ID, "timer", uMess);
 }
 
@@ -222,26 +219,26 @@ void OnTick() {
     // but maybe TimeCurrent requires us to be logged in?
     string uTime = IntegerToString(TimeCurrent());
     // same as Time[0]
-    datetime tTime = iTime(uSYMBOL, iTIMEFRAME, 0);
+    datetime tTime = iTime(uSYMBOL, Period(), 0);
 
     if (tTime != tNextbartime) {
         iBAR += 1; // = Bars - 100
         bNewBar = true;
         iTICK = 0;
         tNextbartime = tTime;
-        uInfo = sBarInfo();
+        // uInfo = sBarInfo();
+	uInfo = "json|" + jOTBarInformation(uSYMBOL, Period(), 0) ;
         uType = "bar";
         uMess  = zOTLibSimpleFormatBar(uType, uCHART_ID, 0, uTime, uInfo);
     } else {
         bNewBar = false;
         iTICK += 1;
-        uInfo = iTICK;
+	uInfo = "json|" + jOTTickInformation(uSYMBOL, Period()) ;
         uType = "tick";
         uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
 
-    eSendOnSpeaker(uCHART_ID, uType, uMess);
-    
+    eSendOnSpeaker(uCHART_ID, uType, uMess);   
 }
 
 void OnDeinit(const int iReason) {
