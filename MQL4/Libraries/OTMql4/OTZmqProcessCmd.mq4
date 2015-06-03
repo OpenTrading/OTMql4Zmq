@@ -9,7 +9,7 @@ I know this is verbose and could be done more compactly,
 but it's clean and robust so I'll leave it like this for now.
 
 If you want to extend this for your own functions you have declared in Mql4,
-look at how zOTZmqProcessCmd calls zOTLibProcessCmd and then 
+look at how zOTZmqProcessCmd calls zOTLibProcessCmd and then
 goes on and handles it if zOTLibProcessCmd didn't.
 
 
@@ -29,7 +29,7 @@ goes on and handles it if zOTLibProcessCmd didn't.
 #include <OTMql4/OTMql4Zmq.mqh>
 
 string zOTZmqProcessCmd(string uMess) {
-    /* 
+    /*
        This is the replacement for what should be Eval in Mt4:
        take a string expression and evaluate it.
        zMt4LibProcessCmd handles base Mt4 expressions, and
@@ -39,7 +39,7 @@ string zOTZmqProcessCmd(string uMess) {
        Returns the result of processing the command.
        Returns "" if there is an error.
     */
-   
+
     string uType, uChartId, uIgnore, uMark, uCmd;
     string uArg1="";
     string uArg2="";
@@ -49,7 +49,7 @@ string zOTZmqProcessCmd(string uMess) {
     string aArrayAsList[];
     int iLen;
     string uRetval, uKey, uMsg;
-    
+
     iLen =  StringLen(uMess);
     if (iLen <= 0) {return("");}
 
@@ -57,7 +57,7 @@ string zOTZmqProcessCmd(string uMess) {
     if (uRetval != "") {
         return(uRetval);
     }
-    
+
     vStringToArray(uMess, aArrayAsList, "|");
 
     iLen = ArraySize(aArrayAsList);
@@ -68,7 +68,7 @@ string zOTZmqProcessCmd(string uMess) {
         vError("eOTLibProcessCmd: preprocess failed with error: " +uRetval);
         return("");
     }
-    
+
     uType   = aArrayAsList[0];
     uChartId  = aArrayAsList[1];
     uIgnore = aArrayAsList[2];
@@ -79,7 +79,9 @@ string zOTZmqProcessCmd(string uMess) {
     uArg3   = aArrayAsList[7];
     uArg4   = aArrayAsList[8];
     uArg5   = aArrayAsList[9];
-    
+    uArg5   = aArrayAsList[10];
+    uArg5   = aArrayAsList[11];
+
     uKey = StringSubstr(uCmd, 0, 3);
     // vTrace("zOTZmqProcessCmd uKey: " +uKey +" uCmd: " +uCmd+ " uMark: " +uMark);
 

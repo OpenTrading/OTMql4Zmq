@@ -112,7 +112,7 @@ string uZmqReceiveNew (int iListener) {
     iMessageLength = StringLen(uMessage);
     if (iMessageLength > 0) {
         // vTrace("Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
-        
+
     }
 
     return(uMessage);
@@ -155,7 +155,7 @@ string uZmqReceive (int iListener) {
             uMessage = zmq_msg_data(iRequestPtr);
 
             vDebug("uZmqReceive: Received message of zmq_msg_size: " + iMessageLength);
-        
+
             // vTrace("uZmqReceive: Drop excess null's from the pointer.");
             uMessage = StringSubstr(uMessage, 0, iMessageLength);
             // vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));

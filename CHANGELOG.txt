@@ -1,3 +1,9 @@
+commit b9404cc6e6aba334f7b96a6f636817475f159137
+Date:   Mon May 18 15:42:37 2015 +0300
+
+    Refactored the MQL code into MQL4/Libraries/OTMql4/OTPyChart.mq4
+    and started using JSON to communicate to the client.
+
 commit d8ee22d15f318f08d43f560f193f525f397b980e
 Date:   Fri May 15 11:29:11 2015 +0300
 
