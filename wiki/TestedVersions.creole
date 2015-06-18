@@ -1,0 +1,3 @@
+Please report any system it works or doesn't work on in the wiki:
+include the Metatrader build number, the origin of the metatrader exe,
+the Windows version, and the ZeroMq version and version of the Python pyzmq.

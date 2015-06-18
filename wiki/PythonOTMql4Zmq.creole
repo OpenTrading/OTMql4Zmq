@@ -1,0 +1,18 @@
+=== Python OTMql4Zmq
+
+The PyZmq expert and code requires the OpenTrading Metatrader-Python bridge
+https://github.com/OpenTrading/OTMql4Py/
+with {{{pyzmq}}} installed in it (see [[PyZmq]]).
+
+The Metatrader-Python bridge also requires the OpenTrading  Library:
+https://github.com/OpenTrading/OTMql4Lib/
+
+For an example expert for using the Python OTMql4Zmq, see [[TestExpert]].
+
+=== Problems
+
+We are having problems with the receiving of messages with the Python [[PyZmq]]:
+the first 16 bytes of a message published from OTMql4Zmq are sometimes (not always)
+garbled, including nulls. The rest of the message is fine.
+The workaround it to pad the message with 16 bytes. See:
+https://github.com/OpenTrading/OTMql4Zmq/issues/1

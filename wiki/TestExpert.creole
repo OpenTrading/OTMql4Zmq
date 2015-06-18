@@ -1,0 +1,33 @@
+== Test Expert
+
+There are two test expert advisors:
+
+* one for the the compiled DLL OTMql4Zmq:
+[[MQL4/Experts/OTMql4/OTZmqCmdEA.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Experts/OTMql4/OTZmqCmdEA.mq4]]
+We are having **big** problems with the receiving of messages by Mt4 with the compiled
+DLL: the messages get received, but shortly afterwards, Mt4 crashes.
+We are having **big** problems with the receiving of messages from Mt4 with the
+compiled DLL: the messages are sometimes totally corrupt, with nulls in strings.
+We are often having problems with the first 16 bytes of a message published from Mt4
+that are sometimes (not always) garbled, including nulls. The rest of the message
+is fine. See:
+https://github.com/OpenTrading/OTMql4Zmq/issues/1 and [[CompiledDllOTMql4Zmq]].
+**In summary, the compiled DLL OTMql4Zmq is unusable for now**.
+
+* one for the Python [[PyZmq]]:
+[[MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4]]
+See [[PythonOTMql4Zmq]].
+
+=== Troubleshooting
+
+During debugging, we have had cases of the expert not being able
+to be removed: this is not normally the case, only when we have bad code.
+
+If this happens, it may precent Mt4 from exiting cleanly.  If so, you
+must kill Mt4, and then manually edit the profile for that chart to
+remove the expert. Go to the {{{profile}} directory of your Mt4
+installation and read the file `lastprofile.ini` to find out what
+profile you are currently using. Then go into that directory and
+search the `chr` files for the ones that contain an `<expert>`
+section. Remove the section that starts with `<expert>` and ends with
+`</expert>`, inclusive.  Then restart Mt4.

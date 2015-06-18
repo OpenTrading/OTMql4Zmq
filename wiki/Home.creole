@@ -1,0 +1,12 @@
+Welcome to the OTMql4Zmq wiki!
+
+Please file any bugs in the issues tracker:
+https://github.com/OpenTrading/OTMql4Zmq/issues
+
+Use the Wiki to start topics for discussion:
+https://github.com/OpenTrading/OTMql4Zmq/wiki
+It's better to use the wiki for knowledge capture, and then we can pull
+the important pages back into the documentation in the share/doc directory.
+You will need to be signed into github.com to see or edit in the wiki.
+
+See the RoadMap page for how the future is being planned.

@@ -28,30 +28,39 @@ oParser = OptionParser(usage=sUsage)
 # I doubt the idea of subscribing at the same time works as we block on the
 # publishing. We need to refactor with threads.
 oParser.add_option("-s", "--subport", action="store", dest="sSubPort", type="string",
-                  default="2027",
-                  help="the TCP port number to subscribe to (default 2027)")
+                   default="2027",
+                   help="the TCP port number to subscribe to (default 2027)")
 # if sPubPort is > 0 then publish a Zmq version query
 oParser.add_option("-p", "--pubport", action="store", dest="sPubPort", type="string",
-                  default="0",
-                  help="the TCP port number to publish to (default 0)")
+                   default="0",
+                   help="the TCP port number to publish to (default 0)")
 oParser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
-                  default="127.0.0.1",
-                  help="the TCP address to subscribe on (default 127.0.0.1)")
+                   default="127.0.0.1",
+                   help="the TCP address to subscribe on (default 127.0.0.1)")
 oParser.add_option("-v", "--verbose", action="store", dest="iVerbose", type="string",
-                  default="1",
-                  help="the verbosity, 0 for silent 4 max (default 1)")
+                   default="1",
+                   help="the verbosity, 0 for silent 4 max (default 1)")
 
 def bCloseContextSockets(oContext, oSubSocket, oPubSocket, lOptions):
-     oSubSocket.setsockopt(zmq.LINGER, 0)
-     oSubSocket.close()
-     if oPubSocket:
+    """
+
+
+    :param oContext:
+    :param oSubSocket:
+    :param oPubSocket:
+    :param lOptions:
+    :rtype : object
+    """
+    oSubSocket.setsockopt(zmq.LINGER, 0)
+    oSubSocket.close()
+    if oPubSocket:
         oPubSocket.setsockopt(zmq.LINGER, 0)
         oPubSocket.close()
-     if lOptions and lOptions.iVerbose >= 1:
-         print "destroying the context"
-     sys.stdout.flush()
-     oContext.destroy()
-     return True
+    if lOptions and lOptions.iVerbose >= 1:
+        print "destroying the context"
+    sys.stdout.flush()
+    oContext.destroy()
+    return True
 
 def iMain():
     (lOptions, lArgs) = oParser.parse_args()
@@ -63,7 +72,7 @@ def iMain():
             assert sElt in lKnownTypes
 
     sSubPort = lOptions.sSubPort
-    assert int(sSubPort) > 0 and int(sSubPort) < 66000
+    assert 0 < int(sSubPort) < 66000
     
     sIpAddress = lOptions.sIpAddress
     assert sIpAddress
@@ -86,7 +95,7 @@ def iMain():
             oSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
         sPubPort = lOptions.sPubPort
-        if int(sPubPort) > 0 and int(sPubPort) < 66000:
+        if 0 < int(sPubPort) < 66000:
             oPubSocket = oContext.socket(zmq.PUB)
 
             if lOptions.iVerbose >= 1:
@@ -112,10 +121,40 @@ def iMain():
                     time.sleep(0.1)
                     continue
             else:
-                sTopic, sString = oSubSocket.recv_multipart()
+                lRetval = [None, None]
+                lRetval = oSubSocket.recv_multipart()
+                try:
+                    if len(lRetval) != 2:
+                        print "WARN: somethings very wrong: expected len=2 " + \
+                              repr(lRetval)
+                        sTopic= ""
+                        sString = lRetval[0]
+                    else:
+                        sTopic, sString = lRetval
+                    lElts = sString.split('|')
+                    if len(lElts) < 6:
+                        print "WARN: somethings a little wrong: expected len>=6 " + \
+                              repr(lElts)
+                    sCmd = lElts[0]
+                    # the first part of the message is the topic
+                    if sCmd not in lKnownTypes:
+                        print "WARN: unrecognized beginning of message: " + \
+                              repr(map(ord, sCmd))
+                        # should check for bytes < 32 or > 128
+                        for sElt in lKnownTypes:
+                            if sCmd.endswith(sElt):
+                                sCmd = sElt
+                                break
+                        if sCmd not in lKnownTypes:
+                            continue
+                        if sTopic == "":
+                            sTopic = sCmd
+                except Exception, e:
+                    print "ERROR: exception in recv_multipart: " +str(e)
+                        
             # if not sString: continue
             assert sTopic in lKnownTypes
-            print("%s|%s|%15.5f" % (sTopic , sString , time.time()))
+            print "INFO: %s at %15.5f" % (sString , time.time())
             sTopic = ''
             # print map(ord, sString[:18])
     except KeyboardInterrupt:

@@ -1,0 +1,6 @@
+
+Use the RoadMap page in the wiki to plan the future of the project.
+
+1) Testing: Write a Mt4 sctipt that can run a series of tests.
+
+2) More testing: Write Python scripts that can test Zmq under Mt4.

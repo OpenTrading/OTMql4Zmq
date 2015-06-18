@@ -70,7 +70,7 @@ int OnInit() {
             return(iRetval);
         }
         Print("Called iPyInit successfully");
-        
+
         uArg="import zmq";
         iRetval = iPySafeExec(uArg);
         if (iRetval <= -2) {
@@ -95,16 +95,16 @@ int OnInit() {
             return(-3);
         }
         Comment(uCHART_ID);
-                          
+
         iCONTEXT = iPyEvalInt("id(ZmqChart.oCONTEXT)");
         GlobalVariableTemp("fPyZmqContext");
         GlobalVariableSet("fPyZmqContext", iCONTEXT);
-        
+
         fPY_ZMQ_CONTEXT_USERS = 1.0;
-        
+
     }
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
-    
+
     EventSetTimer(iTIMER_INTERVAL_SEC);
     vDebug("OnInit: fPyZmqContextUsers=" + fPY_ZMQ_CONTEXT_USERS);
 
@@ -113,7 +113,7 @@ int OnInit() {
 
 string ePyZmqPopQueue(string uChartId) {
     string uRetval, uMess;
-    
+
     // There may be sleeps for threads here
     // We may want to loop over zMq4PopQueue to pop many commands
     uRetval = uPySafeEval(uChartId+".zMq4PopQueue()");
@@ -158,8 +158,7 @@ or execute a stack of calls from Python to us in Metatrader.
 void OnTimer() {
     string uRetval="";
     string uMessage;
-    string uMess;
-    string uInfo;
+    string uMess, uInfo;
     string uType = "timer";
     string uMark;
 
@@ -172,14 +171,8 @@ void OnTimer() {
         vWarn("OnTimer: unallocated context");
         return;
     }
-    vTrace("OnTimer: iCONTEXT=" +iCONTEXT);
-    
-    // FixMe: could use GetTickCount but we may not be logged in
-    // but maybe TimeCurrent requires us to be logged in?
-    string uTime = IntegerToString(TimeCurrent());
-    // same as Time[0]
-    datetime tTime=iTime(uSYMBOL, Period(), 0);
-        
+
+    // eHeartBeat first to see if there are any commands
     uRetval = uPySafeEval(uCHART_ID+".eHeartBeat(0)");
     if (StringFind(uRetval, "ERROR: ", 0) >= 0) {
         uRetval = "ERROR: eHeartBeat failed: "  + uRetval;
@@ -191,7 +184,15 @@ void OnTimer() {
         vWarn("OnTimer: " +uRetval);
         // drop through
     }
-    
+    //vTrace("OnTimer: iCONTEXT=" +iCONTEXT);
+
+    // FixMe: could use GetTickCount but we may not be logged in
+    // but maybe TimeCurrent requires us to be logged in?
+    // Add microseconds?
+    string uTime = IntegerToString(TimeCurrent());
+    // same as Time[0]
+    datetime tTime=iTime(uSYMBOL, Period(), 0);
+
     uInfo = "json|" + jOTTimerInformation();
     uMess  = zOTLibSimpleFormatTimer(uType, uCHART_ID, 0, uTime, uInfo);
     eSendOnSpeaker(uCHART_ID, "timer", uMess);
@@ -223,22 +224,18 @@ void OnTick() {
 
     if (tTime != tNextbartime) {
         iBAR += 1; // = Bars - 100
-        bNewBar = true;
         iTICK = 0;
         tNextbartime = tTime;
-        // uInfo = sBarInfo();
 	uInfo = "json|" + jOTBarInformation(uSYMBOL, Period(), 0) ;
         uType = "bar";
         uMess  = zOTLibSimpleFormatBar(uType, uCHART_ID, 0, uTime, uInfo);
     } else {
-        bNewBar = false;
         iTICK += 1;
 	uInfo = "json|" + jOTTickInformation(uSYMBOL, Period()) ;
         uType = "tick";
         uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
-
-    eSendOnSpeaker(uCHART_ID, uType, uMess);   
+    eSendOnSpeaker(uCHART_ID, uType, uMess);
 }
 
 void OnDeinit(const int iReason) {
@@ -257,19 +254,19 @@ void OnDeinit(const int iReason) {
             vPyExecuteUnicode("ZmqChart.oCONTEXT = None");
         }
         GlobalVariableDel("fPyZmqContext");
-        
+
         GlobalVariableDel("fPyZmqContextUsers");
         vDebug("OnDeinit: deleted fPyZmqContextUsers");
-        
+
         vPyDeInit();
     } else {
         fPY_ZMQ_CONTEXT_USERS -= 1.0;
         GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
         vDebug("OnDeinit: decreased, value of fPyZmqContextUsers to: " + fPY_ZMQ_CONTEXT_USERS);
     }
-    
+
     vDebug("OnDeinit: delete of the chart in Python");
-    vPyExecuteUnicode(uCHART_ID +".vRemove()");    
+    vPyExecuteUnicode(uCHART_ID +".vRemove()");
     Comment("");
 
 }

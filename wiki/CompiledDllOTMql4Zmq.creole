@@ -1,0 +1,72 @@
+== Compiled Dll OTMql4Zmq
+
+=== Problems
+
+We are having **big** problems with the receiving of messages by Mt4 with the compiled
+DLL: the messages get received, but shortly afterwards, Mt4 crashes. That'ss big.
+
+We are having **big** problems with the receiving of messages from Mt4 with the
+compiled DLL: the messages are sometimes totally corrupt, with nulls in strings.
+We are often having problems with the first 16 bytes of a message published from Mt4
+that are sometimes (not always) garbled, including nulls. The rest of the message
+is fine. See:
+https://github.com/OpenTrading/OTMql4Zmq/issues/1
+
+We've put some debugging code in {{{bin/OTZmqSubscribe.py}}}. What we are seeing
+should never happen! The code
+{{{
+                lRetval = [None, None]
+                lRetval = oSubSocket.recv_multipart()
+}}}
+should make {{{lRetval}}} a list of 2 values
+{{{
+                        sTopic, sString = lRetval
+}}}
+Sometimes it is. But sometimes it isn't! We added the debugging code:
+{{{
+if len(lRetval) != 2:
+    print "WARN: somethings very wrong: expected len=2 " + \
+        repr(lRetval)
+}}}
+and look what we see:
+{{{
+WARN: somethings very wrong: expected len=2 ['\x02\x00\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00tick|250730|EURGBP|240|0.7159|0.71604|106|2015.06.18 16:00 ']
+}}}
+A list of one element, where the first 16 bytes are trash, including null bytes.
+
+Sometimes it gets worse:
+{{{
+WARN: somethings very wrong: expected len=2 ['g\x00\x00\x00D\x00E\x00B\x00U\x00G\x00:\x00 \x00P\x00u\x00b\x00l\x00i\x00s\x00h\x00e\x00d\x00 \x00m\x00e\x00s\x00s\x00a\x00g\x00e\x00:\x00 \x000\x001\x002\x003\x004\x005\x006\x007\x008\x009\x00A']
+}}}
+If you strip the null bytes out of the list element (remember there should be 2) ,
+the string is
+{{{
+gDEBUG: Published message: 0123456789A'
+}}}
+
+This is garbled up with a debug message printed to stdout by Mt4 just after sending,
+from line 81 of {{{Libraries/OTMql4/ZmqSendReceive.mq4}}}:
+[[MQL4/Libraries/OTMql4/ZmqSendReceive.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Libraries/OTMql4/ZmqSendReceive.mq4]]
+{{{
+        vDebug("Published message: " + uMessage);
+}}}
+
+**In summary, the compiled DLL OTMql4Zmq is unusable for now, until someone
+who knows C can figure it out**.
+
+=== Compiled DLL Changes
+
+The source checked in to the {{{src/}}} directory is from:
+{{{
+git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq
+}}}
+
+This has the very simple changes needed to run against ZeroMQ 4.0.x.
+We deleted the {{{.mqh}}} file, as that was not updated for Build 600,
+and is replaced with our version in the {{{MQL4/Include/OTMql4}}} directory.
+
+We also deleted the {{{examples/}}} directory as we will have new Python
+scripts in {{{bin/}}} and those examples do not use our nomenclature.
+
+For an example expert for using the Compiled Dll OTMql4Zmq,
+see [[TestExpert]].

@@ -95,6 +95,9 @@ class ZmqChart(Mq4Chart):
                 oListenerSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
             self.oListenerSubSocket = oListenerSubSocket
 
+    def eReturnOnSpeaker(self, sTopic, sMsg, sOrigin=None):
+        return self.eSendOnSpeaker(sTopic, sMsg, sOrigin)
+    
     def eSendOnSpeaker(self, sTopic, sMsg, sOrigin=None):
         if sOrigin:
 	    # This message is a reply in a cmd

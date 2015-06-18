@@ -171,7 +171,7 @@ void OnTimer() {
     if (GlobalVariableCheck("fZmqContextUsers") == false) {
       return;
     }
-    
+
     vListen();
 }
 
@@ -180,13 +180,13 @@ void vListen() {
     string uMessage;
     bool bRetval;
     string sMess;
-    
+
     iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
     if (iLISTENER < 1) {
         vError("OnTimer: unallocated listener");
         return;
     }
-    
+
     vTrace("OnTimer: looking for messages");
     uMessage = uZmqReceive(iLISTENER);
     vTrace("OnTimer: found message: " + uMessage);
@@ -211,11 +211,11 @@ void vListen() {
         Sleep(1000);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
         vTrace("OnTimer: got cmd message: " + uMessage);
-        
+
         vDebug("NOT Sending NULL message to: " + iLISTENER);
         //      bZmqSend(iLISTENER, "");
         Sleep(1000);
-      
+
         vTrace("Processing defered cmd message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
         if (StringLen(uRetval) > 0) {
