@@ -71,7 +71,7 @@ int OnInit() {
         }
         Print("Called iPyInit successfully");
 
-        uArg="import zmq";
+        uArg = "import zmq";
         iRetval = iPySafeExec(uArg);
         if (iRetval <= -2) {
             // VERY IMPORTANT: if the ANYTHING fails with SystemError we MUST PANIC

@@ -1,3 +1,9 @@
+commit a351fae648d518d7331e8979bf9f764fdc0e0af5
+Date:   Thu Jun 18 22:05:49 2015 +0300
+
+    Moved the documentation over to the wiki in Creole format.
+    Add wiki/CompiledDllOTMql4Zmq.creole to document the problems with the DLL version.
+
 commit 487556d76f259e4c4ad1b6671b4d6ec05fcee4c0
 Date:   Wed Jun 3 09:55:28 2015 +0300
 
