@@ -1,3 +1,8 @@
+commit 2bb0b5c861aef0aced5478071285ae912961286d
+Date:   Thu Jun 18 23:01:08 2015 +0300
+
+    Added a warning message that MQL4/Experts/OTMql4/OTZmqCmdEA.mq4 is broken.
+
 commit a351fae648d518d7331e8979bf9f764fdc0e0af5
 Date:   Thu Jun 18 22:05:49 2015 +0300
 

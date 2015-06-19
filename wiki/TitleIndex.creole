@@ -1,7 +1,9 @@
 
 == Title Index
 
+* [[CompiledDllHistory]]
 * [[CompiledDllOTMql4Zmq]]
+* [[FrontPage]]
 * [[Home]]
 * [[PyZmq]]
 * [[PythonOTMql4Zmq]]

@@ -1,0 +1,30 @@
+#### Project History
+
+The compiled DLL is based on the work by 2012 Austen Conrad:
+(from net/Git/github.com/AustenConrad/mql4zmq/mql4zmq.c)
+
+    The reason for all of this is that MetaTrader is a visual basic
+    application and therefore is written using the STDCALL calling
+    convention while ZeroMQ dll EXPORT defaults to the standard C calling
+    convention (CDECL). If not changed, a call to libzmq.dll from
+    MetaTrader will result in the trading terminal crashing.
+    
+    Therefore, this file generates mql4zmq.dll which wraps each call the
+    zmq.h exports when compiled as libzmq.dll (i.e. each function that has
+    ZMQ_EXPORT preceeding it) as a STDCALL instead (i.e. __stdcall via
+    WINAPI definition).
+    
+    Additionally, MetaTrader4 has limitations on datatypes and data
+    structures that we attempt to resolve by having the wrapping function
+    inputs being of a type and in a manner that will jive with MQL4.
+    
+    To avoid naming collisions with the original zmq.h definitions we
+    renamed our exported functions with 'mql4' appended to the beginning
+    of the name.  In the OTMql4Zmq.mqh we revert the names back to the
+    original to reduce confusion when writing experts.
+
+The source checked in to the {{{src/mql4zmq}}} directory has the very simple
+changes needed to run against ZeroMQ 4.0.x and is from:
+`git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
+
+
