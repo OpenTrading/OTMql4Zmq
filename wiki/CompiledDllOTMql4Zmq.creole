@@ -1,5 +1,11 @@
 == Compiled Dll OTMql4Zmq
 
+These problems may be fixed now; test it add your results as comments to
+
+We replaced {{{MQL4/Libraries/OTMql4/libzmq.dll}}} with {{{libzmq-v100-mt-4_0_4.dll}}}
+from the official ZeroMQ distribution and at least sending from MT4 is working fine:
+http://miru.hk/archive/ZeroMQ-4.0.4~miru1.0-x86.exe
+
 === Problems
 
 We are having **big** problems with the receiving of messages by Mt4 with the compiled

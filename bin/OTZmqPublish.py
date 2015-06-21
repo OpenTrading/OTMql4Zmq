@@ -130,6 +130,7 @@ def lCreateContextSockets(lOptions):
     return (oContext, oReceiverSubSocket, oSenderPubSocket,)
 
 def sDefaultExecType(sRequest):
+    return "cmd"
     if sRequest.startswith("Account") or \
         sRequest.startswith("Terminal") or \
         sRequest.startswith("Window") or \

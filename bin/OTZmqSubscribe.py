@@ -91,6 +91,7 @@ def iMain():
         # on the command line, but there is a bug, and the first 16 chars
         # of the message are coming in garbled (including null bytes).
         # So we subscribe to everything so that we can see the garble.
+        lArgs = ['']
         for sElt in lArgs:
             oSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
@@ -116,21 +117,16 @@ def iMain():
                 # zmq.NOBLOCK raises zmq.error.Again:
                 # Resource temporarily unavailable
                 try:
-                    sTopic, sString = oSubSocket.recv_multipart(flags=zmq.NOBLOCK)
+                    # was sTopic, sString = oSubSocket.recv_multipart(flags=zmq.NOBLOCK)
+                    sString = oSubSocket.recv(flags=zmq.NOBLOCK)
                 except zmq.error.Again:
                     time.sleep(0.1)
                     continue
             else:
                 lRetval = [None, None]
-                lRetval = oSubSocket.recv_multipart()
+                # was lRetval = oSubSocket.recv_multipart()
+                sString = oSubSocket.recv(); sTopic = ""
                 try:
-                    if len(lRetval) != 2:
-                        print "WARN: somethings very wrong: expected len=2 " + \
-                              repr(lRetval)
-                        sTopic= ""
-                        sString = lRetval[0]
-                    else:
-                        sTopic, sString = lRetval
                     lElts = sString.split('|')
                     if len(lElts) < 6:
                         print "WARN: somethings a little wrong: expected len>=6 " + \
@@ -150,10 +146,9 @@ def iMain():
                         if sTopic == "":
                             sTopic = sCmd
                 except Exception, e:
-                    print "ERROR: exception in recv_multipart: " +str(e)
+                    print "ERROR: exception in recv: " +str(e)
                         
             # if not sString: continue
-            assert sTopic in lKnownTypes
             print "INFO: %s at %15.5f" % (sString , time.time())
             sTopic = ''
             # print map(ord, sString[:18])
