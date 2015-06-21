@@ -184,7 +184,6 @@ string zmq_strerror(int errnum) {
  	Print("zmq_strerror: Warning! Error Message has zero length.");
   	return("");
     }
-    Print("iMessLen: "+iMessLen);
 
 /*! replace with uAnsi2Unicode
     // Create a uchar[] array whose size is the string length (plus null terminator)
@@ -268,6 +267,8 @@ string zmq_msg_data (int &msg[]) {
 	// Use the Win32 API to copy the string from the block returned by the DLL
 	// into the uchar[] array
 	RtlMoveMemory(sCharArray, iRecvPtr, iMessLen+1);
+	//? added just to be sure
+	//?sCharArray[iMessLen+1] = (uchar)0x00;
 	// Convert the uchar[] array to a message string
 	uMessage = CharArrayToString(sCharArray);
 
@@ -301,9 +302,9 @@ int zmq_init(int iIoThreads) {
     if (iMessLen < 1) {
 	iError = zmq_errno();	    
 	Print("mql4zmq_init: Initialization failed: " +zmq_strerror(iError));
- 	return(0);
+ 	return(-iError);
     }     
-    return(zmq_init);
+    return(iRetval);
 }
 
 int zmq_term (int context) {

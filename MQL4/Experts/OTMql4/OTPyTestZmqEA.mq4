@@ -127,7 +127,7 @@ string ePyZmqPopQueue(string uChartId) {
     if (uRetval == "") {
         //vTrace("ePyZmqPopQueue: " +uRetval);
     } else {
-        vDebug("ePyZmqPopQueue: Processing popped exec message: " + uRetval);
+        // vTrace("ePyZmqPopQueue: Processing popped exec message: " + uRetval);
         uMess = zOTZmqProcessCmd(uRetval);
         if (StringFind(uRetval, "void|", 0) >= 0) {
             // can be "void|" return value

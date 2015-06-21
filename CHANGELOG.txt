@@ -1,3 +1,8 @@
+commit 8d662f73f501eda9744ece030e347fe60a328701
+Date:   Sun Jun 21 23:45:59 2015 +0300
+
+    Recompiled the DLLS with VS2010 based on libzmq-v100-mt-4_0_4
+
 commit 79d9b03329ad2f555f155cb31c1141ca8afe6255
 Date:   Sun Jun 21 16:31:40 2015 +0300
 

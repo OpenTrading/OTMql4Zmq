@@ -28,6 +28,7 @@ extern string sBindAddress="127.0.0.1";
 
 #include <WinUser32.mqh>
 
+
 int iTIMER_INTERVAL_SEC = 10;
 
 int iSPEAKER=-1;
@@ -64,12 +65,15 @@ void vPanic(string uReason) {
     "A panic prints an error message and then aborts";
     vError("PANIC: " + uReason);
     MessageBox(uReason, "PANIC!", MB_OK|MB_ICONEXCLAMATION);
-    ExpertRemove();
+    // Does this even work?
+    // ExpertRemove();
 }
 
 int OnInit() {
     int iErr;
-    string sErr;
+    string uErr;
+
+    iTIMEFRAME = Period();
 
     if (GlobalVariableCheck("fZmqContextUsers") == true) {
         fZMQ_CONTEXT_USERS=GlobalVariableGet("fZmqContextUsers");
@@ -95,8 +99,9 @@ int OnInit() {
     } else {
         iCONTEXT = zmq_init(1);
         if (iCONTEXT < 1) {
-            iErr=mql4zmq_errno(); sErr=zmq_strerror(iErr);
-            vError("OnInit: failed init of zmq, iErr "+IntegerToString(iErr)+" "+sErr);
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            uErr = "OnInit: failed init of zmq, iErr "+IntegerToString(iErr)+" "+uErr;
+	    vPanic(uErr);
             return(-1);
         }
 
@@ -106,30 +111,38 @@ int OnInit() {
         GlobalVariableTemp("fZmqContext");
         iSPEAKER = zmq_socket(iCONTEXT, ZMQ_PUB);
         if (iSPEAKER < 1) {
-            iErr=mql4zmq_errno(); sErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed allocating the speaker " + ": , iErr "+IntegerToString(iErr)+" "+sErr);
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            vPanic("OnInit: failed allocating the speaker " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
         if (zmq_bind(iSPEAKER,"tcp://"+sBindAddress+":"+iSEND_PORT) == -1) {
-            iErr=mql4zmq_errno(); sErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the speaker on "+sBindAddress+":"+iSEND_PORT +": , iErr "+IntegerToString(iErr)+" "+sErr);
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            vPanic("OnInit: failed binding the speaker on "+sBindAddress+":"+iSEND_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
         vInfo("bound the speaker on "+sBindAddress+":"+iSEND_PORT);
 
-        iLISTENER = zmq_socket(iCONTEXT, ZMQ_REP);
+        iLISTENER = zmq_socket(iCONTEXT, ZMQ_SUB);
         if (iLISTENER < 1) {
-            iErr=mql4zmq_errno(); sErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed allocating the listener " + ": , iErr "+IntegerToString(iErr)+" "+sErr);
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            vPanic("OnInit: failed allocating the listener " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
+	// sBindAddress = "*";
         if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iRECV_PORT) == -1) {
-            iErr=mql4zmq_errno(); sErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iRECV_PORT +": , iErr "+IntegerToString(iErr)+" "+sErr);
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iRECV_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
         vInfo("OnInit: bound the listener on "+sBindAddress+":"+iRECV_PORT);
-
+ 	
+	string uTopic = "cmd";
+	if (zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, uTopic) == -1) {
+            iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
+            vPanic("OnInit: failed subscribing the listener to topic: "+uTopic+", iErr "+IntegerToString(iErr)+" "+uErr);
+            return(-1);
+        }
+    
         GlobalVariableSet("fZmqSpeaker", iSPEAKER);
         GlobalVariableSet("fZmqListener", iLISTENER);
         GlobalVariableSet("fZmqContext", iCONTEXT);
@@ -139,9 +152,11 @@ int OnInit() {
     GlobalVariableSet("fZmqContextUsers", fZMQ_CONTEXT_USERS);
     vInfo("OnInit: Incremented fZmqContextUsers to "+ MathRound(fZMQ_CONTEXT_USERS) + " with iCONTEXT: " + iCONTEXT);
 
-    iTIMEFRAME = Period();
-
     EventSetTimer(iTIMER_INTERVAL_SEC);
+    
+    int major[1];int minor[1];int patch[1];
+    zmq_version(major,minor,patch);
+    vInfo("OnInit: Using zeromq version " + major[0] + "." + minor[0] + "." + patch[0]);
     return(0);
 }
 
@@ -221,23 +236,28 @@ void OnTimer() {
 	if (bRetval == false) {
 	    vWarn("OnTimer: failed bZmqSend");
 	}
+        Sleep(1000);
     }
     
     uMessage = zListen();
+    // uMessage = "";
+    // its non-blocking
+    if ( uMessage == "" ) {return;}
+    
     vTrace("OnTimer: got cmd message: " + uMessage);
     uRetval = "";
 
     if (StringFind(uMessage, "exec", 0) == 0) {
-        vTrace("vListen: got exec message: " + uMessage);
+        vTrace("OnTimer: got exec message: " + uMessage);
         // execs are executed immediately and return a result on the wire
         // They're things that take less than a tick to evaluate
         //vTrace("Processing immediate exec message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
 	// WE INCLUDED THE SMARK
 	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
-        vDebug("NOT Sending message back through iLISTENER: " + uMess);
-        // bRetval=bZmqSend(iLISTENER, uMess);
-        // Sleep(1000);
+        vDebug("OnTimer: Sending message back through iLISTENER: " + uMess);
+        bRetval=bZmqSend(iLISTENER, uMess);
+        Sleep(1000);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
 
         vDebug("NOT Sending NULL message to: " + iLISTENER);
@@ -265,7 +285,7 @@ string zListen() {
     
     iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
     if (iLISTENER < 1) {
-        vError("vListen: unallocated listener");
+        vError("zListen: unallocated listener");
         return("");
     }
     
