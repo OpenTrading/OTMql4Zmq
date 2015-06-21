@@ -92,7 +92,9 @@ string zOTZmqProcessCmd(string uMess) {
         uRetval="error|"+uMsg;
     }
 
-    return (uRetval);
+    // WE INCLUDE THE SMARK
+    uRetval = uMark + "|" + uRetval;
+    return(uRetval);
 }
 
 string uProcessCmdZmq (string uCmd, string uChartId, string uIgnore, string uArg1, string uArg2, string uArg3, string uArg4, string uArg5) {
@@ -111,5 +113,5 @@ string uProcessCmdZmq (string uCmd, string uChartId, string uIgnore, string uArg
         uRetval="error|"+uMsg;
     }
 
-    return (uRetval);
+    return(uRetval);
 }

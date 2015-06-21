@@ -129,17 +129,14 @@ string ePyZmqPopQueue(string uChartId) {
     } else {
         vDebug("ePyZmqPopQueue: Processing popped exec message: " + uRetval);
         uMess = zOTZmqProcessCmd(uRetval);
-        if (uMess == "void|") {
+        if (StringFind(uRetval, "void|", 0) >= 0) {
             // can be "void|" return value
-        } else if (StringFind(uMess, "error|", 0) == 0) {
-            // can be "error|" return value
-            vWarn("ePyZmqPopQueue: ProcessCmd returned: " +uMess);
-            return(uMess);
-        } else if (StringFind(uRetval, "cmd", 0) == 0) {
+        } else if (StringFind(uRetval, "cmd|", 0) >= 0) {
             // if the command is cmd|  - return a value as a retval|
-            // We want the sMark from uRetval instead of uTime
+            // FixMe: We want the sMark from uRetval instead of uTime
             // but we will do than in Python
-            uMess  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "0", uMess);
+	    // WE INCLUDED THE SMARK
+            uMess  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uMess);
             eReturnOnSpeaker(uChartId, "retval", uMess, uRetval);
             vDebug("ePyZmqPopQueue: retvaled " +uMess);
         } else {

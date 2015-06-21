@@ -27,6 +27,11 @@ You may also want to look at our RabbitMQ solution,
 which is a pure Python solution using OTMql4Py and also works without issues:
 https://github.com/OpenTrading/OTMql4AMQP/
 
+You may want to also look at:
+https://github.com/OpenTrading/OpenTrader
+which provides a command-line interpreter to speak to the OTMql4AMQP
+enabled Metatrader.
+
 === Pre-Release
 
 **This is a work in progress - a developers' pre-release version.**
@@ -48,10 +53,9 @@ For the moment there is no installer: just "git clone" or download the
 zip from github.com and unzip into an empty directory. Then recursively copy
 the folder MQL4 over the MQL4 folder of your Metatrader installation. It will
 not overwrite any system files, and keeps its files in subdirectories
-called `OTMql4`.
+called {{{OTMql4}}}.
 
-For the PyZMQ solution, install `OTMql4Py` first and make sure you
-have `pyzmq` installed in your Python (see below).
+See PyZMQ) for installing installing into your Python.
 
 === Project
 
@@ -66,4 +70,3 @@ You will need to be signed into github.com to see or edit in the wiki.
 
 
 * TitleIndex)
-

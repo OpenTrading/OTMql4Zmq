@@ -1,3 +1,8 @@
+commit 88452eec6b15713d1c88b63fd22808823996fdcf
+Date:   Fri Jun 19 18:00:02 2015 +0300
+
+    Moved the doc into the wiki.
+
 commit 2bb0b5c861aef0aced5478071285ae912961286d
 Date:   Thu Jun 18 23:01:08 2015 +0300
 

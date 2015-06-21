@@ -26,8 +26,8 @@ to be removed: this is not normally the case, only when we have bad code.
 If this happens, it may precent Mt4 from exiting cleanly.  If so, you
 must kill Mt4, and then manually edit the profile for that chart to
 remove the expert. Go to the {{{profile}} directory of your Mt4
-installation and read the file `lastprofile.ini` to find out what
+installation and read the file {{{lastprofile.ini}}} to find out what
 profile you are currently using. Then go into that directory and
-search the `chr` files for the ones that contain an `<expert>`
-section. Remove the section that starts with `<expert>` and ends with
-`</expert>`, inclusive.  Then restart Mt4.
+search the {{{chr}}} files for the ones that contain an {{{<expert>}}}
+section. Remove the section that starts with {{{<expert>}}} and ends with
+{{{</expert>}}}, inclusive.  Then restart Mt4.

@@ -195,30 +195,25 @@ which allows us to use Python to look for Zmq inbound messages,
 or execute a stack of calls from Python to us in Metatrader.
 */
 void OnTimer() {
-
-    /* timer events can be called before we are ready */
-    if (GlobalVariableCheck("fZmqContextUsers") == false) {
-      return;
-    }
-
-    vListen();
-}
-
-void vListen() {
     string uRetval="";
     string uMessage;
     bool bRetval;
     string uType = "timer";
-    string uMess, uInfo, uMess;
+    string uMess, uInfo;
     // FixMe: could use GetTickCount but we may not be logged in
     // but maybe TimeCurrent requires us to be logged in?
     string uTime = IntegerToString(TimeCurrent());
     // same as Time[0]
     datetime tTime = iTime(uSYMBOL, Period(), 0);
+
+    /* timer events can be called before we are ready */
+    if (GlobalVariableCheck("fZmqContextUsers") == false) {
+      return;
+    }
     
     iSPEAKER=MathRound(GlobalVariableGet("fZmqSpeaker"));
     if (iSPEAKER < 1) {
-        vWarn("OnTick: unallocated speaker");
+        vWarn("OnTimer: unallocated speaker");
     } else {
 	uInfo = "json|" + jOTTimerInformation();
 	uMess  = zOTLibSimpleFormatTimer(uType, uCHART_ID, 0, uTime, uInfo);
@@ -228,23 +223,8 @@ void vListen() {
 	}
     }
     
-    iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
-    if (iLISTENER < 1) {
-        vError("vListen: unallocated listener");
-        return;
-    }
-
-    
-    // vTrace("vListen: looking for messages");
-    uMessage = uZmqReceive(iLISTENER);
-    if (StringLen(uMessage) == 0) {
-        // we will always get null messages if nothing is on the wire
-        // as we are not blocking, which would block the tick processing
-        // but we seem to also get garbage - empty CR or LF perhaps?
-        // FixMe - investigate
-        return;
-    }
-    vTrace("vListen: found message: " + uMessage);
+    uMessage = zListen();
+    vTrace("OnTimer: got cmd message: " + uMessage);
     uRetval = "";
 
     if (StringFind(uMessage, "exec", 0) == 0) {
@@ -253,12 +233,12 @@ void vListen() {
         // They're things that take less than a tick to evaluate
         //vTrace("Processing immediate exec message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
-        uMess="retval|"+uRetval;
+	// WE INCLUDED THE SMARK
+	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
         vDebug("NOT Sending message back through iLISTENER: " + uMess);
         // bRetval=bZmqSend(iLISTENER, uMess);
-        Sleep(1000);
+        // Sleep(1000);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
-        vTrace("vListen: got cmd message: " + uMessage);
 
         vDebug("NOT Sending NULL message to: " + iLISTENER);
         //      bZmqSend(iLISTENER, "");
@@ -267,17 +247,39 @@ void vListen() {
         vTrace("Processing defered cmd message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
         if (StringLen(uRetval) > 0) {
-            uMess="retval|"+uRetval;
+	    // WE INCLUDED THE SMARK
+	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
             vDebug("Publishing message: " + uMess);
-            bRetval=bZmqSend(iSPEAKER, uMess);
+            bRetval = bZmqSend(iSPEAKER, uMess);
+	    Sleep(1000);
         } else {
             vWarn("Unprocessed message: " + uMessage);
         }
     } else {
         vError("Internal error, not cmd or exec: " + uMessage);
     }
+}
 
-    return;
+string zListen() {
+    string uMessage;
+    
+    iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
+    if (iLISTENER < 1) {
+        vError("vListen: unallocated listener");
+        return("");
+    }
+    
+    // vTrace("vListen: looking for messages");
+    uMessage = uZmqReceive(iLISTENER);
+    if (StringLen(uMessage) == 0) {
+        // we will always get null messages if nothing is on the wire
+        // as we are not blocking, which would block the tick processing
+        // but we seem to also get garbage - empty CR or LF perhaps?
+        // FixMe - investigate
+        return("");
+    }
+    vTrace("vListen: found message: " + uMessage);
+    return(uMessage);
 }
 
 void OnTick() {
@@ -287,7 +289,7 @@ void OnTick() {
     bool bRetval;
     string s;
     string uInfo;
-    string uMess, uRetval;
+    string uMess;
 
     iSPEAKER=MathRound(GlobalVariableGet("fZmqSpeaker"));
     if (iSPEAKER < 1) {
@@ -316,6 +318,7 @@ void OnTick() {
     }
     
     bRetval = bZmqSend(iSPEAKER, uMess);
+    Sleep(1000);
     if (bRetval == false) {
 	vWarn("OnTick: failed bZmqSend");
     }

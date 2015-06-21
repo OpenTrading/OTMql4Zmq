@@ -78,6 +78,11 @@ bool bZmqSend(int iSpeaker, string uMessage) {
         //? Will return -1 if no clients are connected to receive message.
         vWarn("No clients subscribed: " + uMessage);
     } else {
+	// See if sleeping here helps not corrupt the payload with the following stdout
+	// Zmq is async on send, so it could be that we are reusing memonry before
+	// the message has actually been delivered
+	// See https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq
+	Sleep(2);
         vDebug("Published message: " + uMessage);
         bRetval = true;
     }

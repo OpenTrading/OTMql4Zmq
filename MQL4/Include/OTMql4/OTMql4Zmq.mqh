@@ -45,7 +45,7 @@ int mql4zmq_msg_data (int &msg[]);
 int mql4zmq_msg_size (int &msg[]);
 
 // Infrastructure.
-int mql4zmq_init (int io_threads);
+int mql4zmq_init (int iIoThreads);
 int mql4zmq_term (int context);
 
 // Sockets.
@@ -240,7 +240,7 @@ int zmq_msg_copy (int dest, int src) {
 
 string zmq_msg_data (int &msg[]) {
     uchar sCharArray[];
-    int iRecvPtr, iMessLen;
+    int iRecvPtr, iMessLen, iRetval;
     string uMessage;
    
     // Call the DLL function and get its block of string memory as an int pointer to the
@@ -257,15 +257,17 @@ string zmq_msg_data (int &msg[]) {
     Print("zmq_msg_data: Message Length mql4zmq_msg_size "+IntegerToString(iMessLen));
 
     /*? replace with uAnsi2Unicode */
-    if (false) {
+    if (true) {
 	// Create a uchar[] array whose size is the string length (plus null terminator)
-	ArrayResize(sCharArray, iMessLen+1);
+	iRetval = ArrayResize(sCharArray, iMessLen+1);
+	if (iRetval < 1) {
+	    Print("zmq_msg_data: Warning! Message resize failed: " + iRetval);
+	    return("");
+	}
 
 	// Use the Win32 API to copy the string from the block returned by the DLL
 	// into the uchar[] array
-	RtlMoveMemory(sCharArray, iRecvPtr, iMessLen);
-	//? added just to be sure
-	sCharArray[iMessLen+1] = (uchar)0x00;
+	RtlMoveMemory(sCharArray, iRecvPtr, iMessLen+1);
 	// Convert the uchar[] array to a message string
 	uMessage = CharArrayToString(sCharArray);
 
@@ -289,8 +291,19 @@ int zmq_msg_size (int &msg[]) {
 }
 
 // Infrastructure.
-int zmq_init (int io_threads) {
-    return(mql4zmq_init(io_threads));
+int zmq_init(int iIoThreads) {
+    int iRetval, iError;
+    if (iIoThreads < 1) {
+	Print("mql4zmq_init: iIoThreads must be >= 1: " +iIoThreads);
+ 	return(0);
+    }
+    iRetval = mql4zmq_init(iIoThreads);
+    if (iMessLen < 1) {
+	iError = zmq_errno();	    
+	Print("mql4zmq_init: Initialization failed: " +zmq_strerror(iError));
+ 	return(0);
+    }     
+    return(zmq_init);
 }
 
 int zmq_term (int context) {
