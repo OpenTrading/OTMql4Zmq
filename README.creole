@@ -16,9 +16,11 @@ There are now two ways of using ZeroMq via in this package:
 
 1. Directly using compiled DLL. We are having problems with the compiled DLL,
    where messages are being sent by Mt4 work but it's not receiving them.
-   See CompiledDllOTMql4Zmq).
+   See
+   CompiledDllOTMql4Zmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq).
    
-2. Through PyZmq) in Python under Metatrader using 
+2. Through PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
+   in Python under Metatrader using 
    OTMql4Py (https://github.com/OpenTrading/OTMql4Py).
    OTMql4Zmq is working fine in both directions.
 
@@ -37,7 +39,13 @@ enabled Metatrader.
 
 OTMql4Zmq works with Metatrader on builds > 6xx, but the test suite and documentation
 still need writing, as well as testing on different versions of
-Windows and Mt4.  ZeroMQ 4.x is now supported.
+Windows and Mt4.
+
+ZeroMQ 4.x is now partitally supported. It's being compiled against a v4.0.4
+release of ZeroMQ (http://zeromq.org), but only part of the API changes are
+in the {{{src/mql4zmq/mql4zmq.[ch]}}}. If anyone is good at MSVC and ZeroMQ,
+if you could look at the code in that directory and check for version improvements,
+we'd be grateful.
 
 The project wiki should be open for editing by anyone logged into GitHub:
 **Please report any system it works or doesn't work on in the wiki:
@@ -54,7 +62,8 @@ the folder MQL4 over the MQL4 folder of your Metatrader installation. It will
 not overwrite any system files, and keeps its files in subdirectories
 called {{{OTMql4}}}.
 
-See PyZMQ) for installing installing into your Python.
+See PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
+for instructions for installing into your Python.
 
 === Project
 
@@ -63,9 +72,11 @@ https://github.com/OpenTrading/OTMql4Zmq/issues
 
 Use the Wiki to start topics for discussion:
 https://github.com/OpenTrading/OTMql4Zmq/wiki/Home
-It's better to use the wiki for knowledge capture, and then we can pull
+It's good to use the wiki for knowledge capture, and then we can pull
 the important pages back into the documentation in the share/doc directory.
-You will need to be signed into github.com to see or edit in the wiki.
+You may need to be signed into github.com to see or edit in the wiki.
 
 
-* TitleIndex)
+* Home (https://github.com/OpenTrading/OTMql4Zmq/wiki/Home)
+
+* TitleIndex (https://github.com/OpenTrading/OTMql4Zmq/wiki/TitleIndex)

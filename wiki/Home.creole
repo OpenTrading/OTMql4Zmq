@@ -10,4 +10,7 @@ the important pages back into the documentation in the share/doc directory.
 You will need to be signed into github.com to see or edit in the wiki.
 
 * [[PyZmq]]
+* [[CompiledDllOTMql4Zmq]]
+* [[TestExpert]]
+
 * [[TitleIndex]]
