@@ -71,7 +71,7 @@ void vPanic(string uReason) {
 
 int OnInit() {
     int iErr;
-    string uErr;
+    string uErr, uTopic;
 
     iTIMEFRAME = Period();
 
@@ -128,7 +128,7 @@ int OnInit() {
             vPanic("OnInit: failed allocating the listener " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-	// sBindAddress = "*";
+	sBindAddress = "*";
         if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iRECV_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iRECV_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
@@ -136,7 +136,8 @@ int OnInit() {
         }
         vInfo("OnInit: bound the listener on "+sBindAddress+":"+iRECV_PORT);
  	
-	string uTopic = "cmd";
+	uTopic = "cmd|";
+	uTopic = "";
 	if (zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, uTopic) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed subscribing the listener to topic: "+uTopic+", iErr "+IntegerToString(iErr)+" "+uErr);
@@ -236,9 +237,9 @@ void OnTimer() {
 	if (bRetval == false) {
 	    vWarn("OnTimer: failed bZmqSend");
 	}
-        Sleep(1000);
     }
     
+    vTrace("OnTimer: listening: ");
     uMessage = zListen();
     // uMessage = "";
     // its non-blocking
@@ -257,12 +258,10 @@ void OnTimer() {
 	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
         vDebug("OnTimer: Sending message back through iLISTENER: " + uMess);
         bRetval=bZmqSend(iLISTENER, uMess);
-        Sleep(1000);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
 
         vDebug("NOT Sending NULL message to: " + iLISTENER);
         //      bZmqSend(iLISTENER, "");
-        Sleep(1000);
 
         vTrace("Processing defered cmd message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
@@ -271,7 +270,6 @@ void OnTimer() {
 	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
             vDebug("Publishing message: " + uMess);
             bRetval = bZmqSend(iSPEAKER, uMess);
-	    Sleep(1000);
         } else {
             vWarn("Unprocessed message: " + uMessage);
         }
@@ -338,7 +336,6 @@ void OnTick() {
     }
     
     bRetval = bZmqSend(iSPEAKER, uMess);
-    Sleep(1000);
     if (bRetval == false) {
 	vWarn("OnTick: failed bZmqSend");
     }

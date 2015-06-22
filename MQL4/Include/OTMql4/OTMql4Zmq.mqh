@@ -4,9 +4,9 @@
 #property link      "https://github.com/OpenTrading/"
 
 #import "kernel32.dll"
-   int lstrlenA(int);
-   void RtlMoveMemory(uchar & arr[], int, int);
-   int LocalFree(int); // May need to be changed depending on how the DLL allocates memory
+int lstrlenA(int);
+void RtlMoveMemory(uchar & arr[], int, int);
+int LocalFree(int); // May need to be changed depending on how the DLL allocates memory
 #import
 
 #import "OTMql4/mql4zmq.dll"
@@ -298,8 +298,9 @@ int zmq_init(int iIoThreads) {
 	Print("mql4zmq_init: iIoThreads must be >= 1: " +iIoThreads);
  	return(0);
     }
+    // ctx_new in 4.x
     iRetval = mql4zmq_init(iIoThreads);
-    if (iMessLen < 1) {
+    if (iRetval < 1) {
 	iError = zmq_errno();	    
 	Print("mql4zmq_init: Initialization failed: " +zmq_strerror(iError));
  	return(-iError);
@@ -377,15 +378,14 @@ string s_recv (int socket, int flags=0) {
     //vTrace("Call the DLL function and get its block of string memory");
     // as an int pointer to the memory rather than as a string
     iRecvPtr = mql4s_recv(socket, flags);
-    //vTrace("Get the length of the string ");
     iMessLen = lstrlenA(iRecvPtr);
 
     // if message length is 0, leave.
     if (iMessLen < 1) {
-	// vDebug("s_recv: Message has zero length.");
+	vTrace("s_recv: Message has zero length.");
  	return("");
     }
-    // vDebug("s_recv: iMessLen lstrlenA "+iMessLen);
+    vTrace("s_recv: lstrlenA: "+iMessLen);
 /*! replace with uAnsi2Unicode
 
     //vTrace("Create a uchar[] array whose size is the string length (plus terminator)");

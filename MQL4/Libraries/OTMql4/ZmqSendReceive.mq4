@@ -17,6 +17,7 @@
 #include <OTMql4/OTLibStrings.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
 #include <OTMql4/OTLibLog.mqh>
+#include <OTMql4/ZmqConstants.mqh>
 
 //FixMe: move
 #import "kernel32.dll"
@@ -79,15 +80,15 @@ bool bZmqSend(int iSpeaker, string uMessage) {
 string uZmqReceive (int iListener) {
     string uMessage = "";
     int iRequestPtr[1];
-    int iMessageLength, iError;
+    int iMessageLength, iError, iRetval;
 
     if (iListener < 1) {
         vError("uZmqReceive: unallocated listener");
         return("");
     }
 
-    // With ZMQ 4.0.4 we're getting err 14 bad address to zmq_msg_init as a SUB
-    if (false) {
+    if (true) {
+	vTrace("uZmqReceive: calling s_recv");
 	uMessage = s_recv(iListener, ZMQ_NOBLOCK);
 	iMessageLength = StringLen(uMessage);
 	if (iMessageLength > 0) {
@@ -95,10 +96,8 @@ string uZmqReceive (int iListener) {
 	}
     } else {	
 	// vTrace("uZmqReceive: initialize iRequestPtr");
-	zmq_msg_init(iRequestPtr);
-	if ( iRequestPtr[0] < 1) {
-	    // 14 bad address
-	    // 11 resource unavailable
+	iRetval = zmq_msg_init(iRequestPtr);
+	if ( iRetval < 0) {
 	    iError = zmq_errno(); uMessage = zmq_strerror(iError);
 	    vError("uZmqReceive: zmq_msg_init() failed! " +iError +" " +uMessage);
 	    return("");
@@ -113,8 +112,8 @@ string uZmqReceive (int iListener) {
 	//
 	//       if (zmq_recv(iListener, iRequestPtr) != -1)
 
+	vTrace("uZmqReceive: calling zmq_recv");
 	// Will return -1 if no message was received.
-	// vTrace("uZmqReceive: zmq_recv");
 	if (zmq_recv(iListener, iRequestPtr, ZMQ_NOBLOCK) != -1) {
 	    // vTrace("uZmqReceive: Retrieve message size");
 	    iMessageLength = zmq_msg_size(iRequestPtr);
@@ -125,11 +124,18 @@ string uZmqReceive (int iListener) {
 		vDebug("uZmqReceive: Received message of zmq_msg_size: " + iMessageLength);
 
 		// vTrace("uZmqReceive: Drop excess null's from the pointer.");
-		uMessage = StringSubstr(uMessage, 0, iMessageLength);
+		// uMessage = StringSubstr(uMessage, 0, iMessageLength);
 		// vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
 	    }
+	} else {
+	    iError = zmq_errno();
+	    // 11 EAGAIN resource unavailable
+	    if (iError != ZMQ_EAGAIN && iError != ZMQ_EVENT_CLOSED) {
+		uMessage = zmq_strerror(iError);
+		vError("uZmqReceive: zmq_recv() failed " +iError +" " +uMessage);
+	    }
+	    uMessage = "";
 	}
-
 	// vTrace("uZmqReceive: Deallocate iRequestPtr.");
 	zmq_msg_close(iRequestPtr);
     }

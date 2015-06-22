@@ -21,6 +21,7 @@ It may prevent the expert from binding to the ports.
 
 """
 import sys
+import os
 import json
 import time
 from optparse import OptionParser
@@ -31,9 +32,6 @@ from OTLibLog import *
 
 # should do something better if there are multiple clients
 def sMakeMark():
-    # from matplotlib.dates import date2num
-    # from datetime import datetime
-    # str(date2num(datetime.now()))
     return "%15.5f" % time.time()
 
 class MqlError(RuntimeError):
@@ -55,8 +53,8 @@ def oOptionParser():
                       default="ANY",
                       help="the chart ID")
     parser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
-                      default=10,
-                      help="timeout in seconds to wait for a reply (10)")
+                      default=60,
+                      help="timeout in seconds to wait for a reply (60)")
     parser.add_option("-e", "--exectype", action="store", dest="sExecType", type="string",
                       default="default",
                       help="exectype: one of cmd or exec or default (default)")
@@ -67,19 +65,19 @@ def oOptionParser():
 
 def lGetOptionsArgs():
     parser = oOptionParser()
-    (lOptions, lArgs,) = parser.parse_args()
+    (oOptions, lArgs,) = parser.parse_args()
 
-    assert int(lOptions.iListenerPort) > 0 and int(lOptions.iListenerPort) < 66000
+    assert int(oOptions.iListenerPort) > 0 and int(oOptions.iListenerPort) < 66000
     # if iSpeakerPort is > 0 then request a Zmq version query
-    assert int(lOptions.iSpeakerPort) >= 0 and int(lOptions.iSpeakerPort) < 66000
-    lOptions.iVerbose = int(lOptions.iVerbose)
-    assert 0 <= lOptions.iVerbose <= 5
-    assert lOptions.sIpAddress
+    assert int(oOptions.iSpeakerPort) >= 0 and int(oOptions.iSpeakerPort) < 66000
+    oOptions.iVerbose = int(oOptions.iVerbose)
+    assert 0 <= oOptions.iVerbose <= 5
+    assert oOptions.sIpAddress
 
-    return (lOptions, lArgs,)
+    return (oOptions, lArgs,)
 
 dPENDING=dict()
-def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, lOptions):
+def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, oOptions):
     """
     We push our requests onto a queue because some of them will be
     answered immediately (exec) and some of them will have the answer
@@ -90,41 +88,40 @@ def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, lOptions):
     dPENDING[sMark] = sRequest
     #
     #
-    sRequest = sType +"|" +lOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
-    # zmq.error.ZMQError
-    oSenderPubSocket.send_multipart([sType, sRequest])
+    sRequest = sType +"|" +oOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
+    # , zmq.NOBLOCK
+    oSenderPubSocket.send(sRequest)
     i = 1
-    if lOptions and lOptions.iVerbose >= 1:
+    if oOptions and oOptions.iVerbose >= 1:
         iLen = len(sRequest)
-        vDebug("%d Sent request %d %s" % (i, iLen, sRequest))
-    time.sleep(1.0)
+        vDebug("%d Sent request of length %d: %s" % (i, iLen, sRequest))
     return ""
 
-def bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, lOptions):
+def bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOptions):
     oReceiverSubSocket.setsockopt(zmq.LINGER, 0)
     oReceiverSubSocket.close()
     oSenderPubSocket.setsockopt(zmq.LINGER, 0)
     oSenderPubSocket.close()
-    if lOptions and lOptions.iVerbose >= 1:
+    if oOptions and oOptions.iVerbose >= 1:
         vDebug("destroying the context")
     sys.stdout.flush()
     oContext.destroy()
     return True
 
-def lCreateContextSockets(lOptions):
+def lCreateContextSockets(oOptions):
     oContext = zmq.Context()
     oReceiverSubSocket = oContext.socket(zmq.SUB)
-    s = lOptions.sIpAddress+":"+str(lOptions.iListenerPort)
-    if lOptions.iVerbose >= 1:
+    s = oOptions.sIpAddress+":"+str(oOptions.iListenerPort)
+    if oOptions.iVerbose >= 1:
         vInfo("Subscribing to: " + s)
     oReceiverSubSocket.connect("tcp://"+s)
 
-    for sElt in lOptions.lTopics:
+    for sElt in oOptions.lTopics:
         oReceiverSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
-    s = lOptions.sIpAddress + ":" + str(lOptions.iSpeakerPort)
+    s = oOptions.sIpAddress + ":" + str(oOptions.iSpeakerPort)
     oSenderPubSocket = oContext.socket(zmq.PUB)
-    if lOptions.iVerbose >= 1:
+    if oOptions.iVerbose >= 1:
         vInfo("Requesting to:  " + s)
     oSenderPubSocket.connect("tcp://" + s)
     return (oContext, oReceiverSubSocket, oSenderPubSocket,)
@@ -177,16 +174,16 @@ def gRetvalToPython(sString, lElts):
 def iMain():
     global dPENDING
 
-    (lOptions, lArgs,) = lGetOptionsArgs()
+    (oOptions, lArgs,) = lGetOptionsArgs()
     
-    if 'retval' not in lArgs:
-        # always subscribe to retval
-        lArgs.append('retval')
-    lOptions.lTopics = lArgs
+    if not lArgs:
+        # subscribe to everything
+        lArgs = ['']
+    oOptions.lTopics = lArgs
     
     oContext = None
     try:
-        (oContext, oReceiverSubSocket, oSenderPubSocket,) = lCreateContextSockets(lOptions)
+        (oContext, oReceiverSubSocket, oSenderPubSocket,) = lCreateContextSockets(oOptions)
 
         i = 0
         while True:
@@ -196,9 +193,9 @@ def iMain():
             sRequest = sys.stdin.readline().strip()
             if not sRequest: break
 
-            if lOptions.sExecType == "default":
+            if oOptions.sExecType == "default":
                 sType = sDefaultExecType(sRequest)
-            elif lOptions.sExecType == "exec":
+            elif oOptions.sExecType == "exec":
                 # execs are executed immediately and return a result on the wire
                 # They're things that take less than a tick to evaluate
                 sType = "exec"
@@ -207,25 +204,27 @@ def iMain():
             sType = "cmd"
 
             sMarkIn = sMakeMark()
-            sRetval = sPushToPending(sMarkIn, sRequest, oSenderPubSocket, sType, lOptions)
-
+            sRetval = sPushToPending(sMarkIn, sRequest, oSenderPubSocket, sType, oOptions)
+            iSec = 0
             # really need to fire this of in a thread
             # and block waiting for it to appear on
             # the retval queue
-            while len(dPENDING.keys()) > 0:
+            while len(dPENDING.keys()) > 0 and iSec < oOptions.iTimeout:
                 # zmq.NOBLOCK gives zmq.error.Again: Resource temporarily unavailable
-                sTopic, sString = oReceiverSubSocket.recv_multipart()
+                sTopic = ""
+                time.sleep(10.0)
+                iSec += 10
+                sString = oReceiverSubSocket.recv()
                 if not sString: continue
                 
+                lElts = sString.split('|')
+                if len(lElts) <= 4:
+                    vWarn("not enough | found in: %s" % (sString,))
                 if sString.startswith('tick'):
                     print sString
                 elif sString.startswith('timer'):
                     print sString
                 elif sString.startswith('retval'):
-                    lElts = sString.split('|')
-                    if len(lElts) <= 4:
-                        vWarn("not enough | found in: %s" % (sString,))
-                        continue
                     print sString
 
                     sMarkOut = lElts[3]
@@ -247,12 +246,12 @@ def iMain():
                 if len(dPENDING.keys()) == 0: break
 
     except KeyboardInterrupt:
-       if lOptions and lOptions.iVerbose >= 1:
+       if oOptions and oOptions.iVerbose >= 1:
            vInfo("exiting")
 
     finally:
        if oContext:
-           bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, lOptions)
+           bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOptions)
 
     return(0)
 

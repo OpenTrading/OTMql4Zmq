@@ -1,3 +1,8 @@
+commit 692aecaf6d8ea7d373bcdc68cdb0b30802bedf1e
+Date:   Mon Jun 22 00:10:36 2015 +0300
+
+    Sending from Mt4 is now working with the DLLS with VS2010 based on libzmq-v100-mt-4_0_4
+
 commit 8d662f73f501eda9744ece030e347fe60a328701
 Date:   Sun Jun 21 23:45:59 2015 +0300
 

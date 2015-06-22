@@ -15,9 +15,8 @@ With ZeroMQ http://zeromq.org/ you can:
 There are now two ways of using ZeroMq via in this package:
 
 1. Directly using compiled DLL. We are having problems with the compiled DLL,
-   where the communications are partially corrupted for Mt4 publishing information,
-   and messages received by Mt4 crash the terminal application. See
-   CompiledDllOTMql4Zmq).
+   where messages are being sent by Mt4 work but it's not receiving them.
+   See CompiledDllOTMql4Zmq).
    
 2. Through PyZmq) in Python under Metatrader using 
    OTMql4Py (https://github.com/OpenTrading/OTMql4Py).

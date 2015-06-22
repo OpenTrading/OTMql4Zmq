@@ -87,11 +87,8 @@ def iMain():
                   " and subscribing to: " + " ".join(lArgs))
         oSubSocket.connect("tcp://"+sIpAddress+":"+sSubPort)
 
-        # FixMe: This should subscribe to only the message types listed
-        # on the command line, but there is a bug, and the first 16 chars
-        # of the message are coming in garbled (including null bytes).
-        # So we subscribe to everything so that we can see the garble.
-        lArgs = ['']
+        if not lArgs:
+            lArgs = ['']
         for sElt in lArgs:
             oSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
