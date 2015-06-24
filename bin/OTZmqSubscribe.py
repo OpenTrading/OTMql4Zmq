@@ -1,17 +1,20 @@
 # -*-mode: python; py-indent-offset: 4; tab-width: 8; coding: utf-8; encoding: utf-8-dos -*-
-
 # This Python script requires pyzmq
 # http://pypi.python.org/packages/source/p/pyzmq/
 
 """
-Usage: OTZmqSubscribe.py [options] message-types...
+Usage: OTZmqSubscribe.py [options] [topics...]
 
 Collect ticks from OTMql4Zmq
 
-IMPORTANT: do NOT run this until the expert has been loaded onto a chart
-and has received its first tick. It will prevent the expert from binding
-to the Pub.Sub ports. So be sure to not keave it running between restarting
-Metatrader,
+Arguments on the command line are the list of Topics to subscribe to on a listener at
+the same time. By default everything ('') is subscribed to, but you could add
+one or more of {{{timer, tick, retval, bar}}}  to the command line to see only
+those topics.
+
+MAYBE: do NOT run this until the expert has been loaded onto a chart.
+It may (but shouldn't) prevent the expert from binding to the ports.
+Also be sure to not keave it running between restarting Metatrader.
 
 """
 import sys

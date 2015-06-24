@@ -37,13 +37,11 @@ bool bZmqSend(int iSpeaker, string uMessage) {
         vError("bZmqSend: Un Allocated speaker " + ": " + IntegerToString(iSpeaker));
         return(false);
     }
-    // buggy - prepend with 16 bytes for them to get munged
-    // uMessage = "0123456789ABCDEF" + uMessage;
     iMessLen = StringLen(uMessage);
     //? ALLOW null messages
 
     if (true) {
-        // vTrace("bZmqSend: zmq_msg_init_size "+ uMessage + " length " + IntegerToString(iMessLen));
+        //vTrace("bZmqSend: s_send "+ uMessage + " length " + IntegerToString(iMessLen));
 	if (s_send(iSpeaker, uMessage) == -1) {
 	    iError = zmq_errno(); uMessage = zmq_strerror(iError);
 	    vError("bZmqSend: error sending message: " +iError +" " +uMessage);
@@ -77,7 +75,7 @@ bool bZmqSend(int iSpeaker, string uMessage) {
     return(bRetval);
 }
 
-string uZmqReceive (int iListener) {
+string uZmqReceive(int iListener) {
     string uMessage = "";
     int iRequestPtr[1];
     int iMessageLength, iError, iRetval;
@@ -88,13 +86,15 @@ string uZmqReceive (int iListener) {
     }
 
     if (true) {
-	vTrace("uZmqReceive: calling s_recv");
+	//vTrace("uZmqReceive: calling s_recv");
 	uMessage = s_recv(iListener, ZMQ_NOBLOCK);
 	iMessageLength = StringLen(uMessage);
 	if (iMessageLength > 0) {
-	    vTrace("uZmqReceive: Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
+	    //vTrace("uZmqReceive: Received message "+uMessage+" of StringLen: " + IntegerToString(iMessageLength));
 	}
-    } else {	
+    } else {
+	// THIS CODE DOES NOT WORK - but should
+	// I've even seen access violations (but not crashes)
 	// vTrace("uZmqReceive: initialize iRequestPtr");
 	iRetval = zmq_msg_init(iRequestPtr);
 	if ( iRetval < 0) {
@@ -112,7 +112,7 @@ string uZmqReceive (int iListener) {
 	//
 	//       if (zmq_recv(iListener, iRequestPtr) != -1)
 
-	vTrace("uZmqReceive: calling zmq_recv");
+	//vTrace("uZmqReceive: calling zmq_recv");
 	// Will return -1 if no message was received.
 	if (zmq_recv(iListener, iRequestPtr, ZMQ_NOBLOCK) != -1) {
 	    // vTrace("uZmqReceive: Retrieve message size");
@@ -125,14 +125,14 @@ string uZmqReceive (int iListener) {
 
 		// vTrace("uZmqReceive: Drop excess null's from the pointer.");
 		// uMessage = StringSubstr(uMessage, 0, iMessageLength);
-		// vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
+		//vTrace("uZmqReceive: Returning message: " + uMessage + " of length " + StringLen(uMessage));
 	    }
 	} else {
 	    iError = zmq_errno();
 	    // 11 EAGAIN resource unavailable
 	    if (iError != ZMQ_EAGAIN && iError != ZMQ_EVENT_CLOSED) {
 		uMessage = zmq_strerror(iError);
-		vError("uZmqReceive: zmq_recv() failed " +iError +" " +uMessage);
+		vWarn("uZmqReceive: zmq_recv() failed with error " +iError +" " +uMessage);
 	    }
 	    uMessage = "";
 	}

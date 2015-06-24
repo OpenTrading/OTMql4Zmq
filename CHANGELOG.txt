@@ -1,3 +1,18 @@
+commit 9675f7c2c0599a0947b0e949adb7edf6f92857b1
+Date:   Wed Jun 24 20:59:02 2015 +0300
+
+    checked in src/mql4zmq/pre-compiled/*.dll from  https:/github.com/OpenTrading/mql4zmq - ZeroMQ v2.2.0
+
+commit a8139f12f9993ef4228e9fb242d2aa932cae5d2a
+Date:   Wed Jun 24 20:56:49 2015 +0300
+
+    Moved src/ to https:/github.com/OpenTrading/mql4zmq
+
+commit 491605055390efdedcc39a3b038e8826d60fe98a
+Date:   Mon Jun 22 23:45:21 2015 +0300
+
+    Documented Fixed compiled DLL sending from Mt4
+
 commit 3e98deebdc43ea7b5539fd78732d3849873d95b8
 Date:   Mon Jun 22 23:12:44 2015 +0300
 

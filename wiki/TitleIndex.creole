@@ -8,6 +8,7 @@
 * [[PyZmq]]
 * [[PythonOTMql4Zmq]]
 * [[RoadMap]]
+* [[Scripts]]
 * [[TestExpert]]
 * [[TestedVersions]]
 * [[TitleIndex]]

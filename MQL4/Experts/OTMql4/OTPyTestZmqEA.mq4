@@ -237,7 +237,7 @@ void OnTick() {
 
 void OnDeinit(const int iReason) {
     //? if (iReason == INIT_FAILED) { return ; }
-    vTrace("OnDeinit: killing the timer");
+    //vTrace("OnDeinit: killing the timer");
     EventKillTimer();
 
     fPY_ZMQ_CONTEXT_USERS=GlobalVariableGet("fPyZmqContextUsers");

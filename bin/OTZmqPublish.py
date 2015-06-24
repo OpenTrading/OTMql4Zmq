@@ -9,16 +9,34 @@ Publish request commands to OTMql4Zmq. Give options on the commnd line,
 and then it will enter a loop reading from the standard input to take
 commands to send to an PyZmq enabled Mt4 (or anything else).
 
-Arguments on the command line are the list of Topics to subscribe to at
-the same time. By default 'retval' is subscribed to, but you could add
-timer to the command line to see timer topics come back.
+Arguments on the command line are the list of Topics to subscribe to on a listener at
+the same time. By default everything ('') is subscribed to, but you could add
+one or more of {{{timer, tick, retval, bar}}}  to the command line to see only
+those topics.
 
-The commands on stdin are sent to PyZmq, and it replies by putting the
-answer in the return subscription as a 'retval' topic.
+The script subscribes on the subscribe port and then sends requests to the requests
+port. In both cases, the Mt4 binds the sockets, and this script connects.
+The commands on stdin are sent to the Zmq enabled Mt4.
 
-IMPORTANT: do NOT run this until the expert has been loaded onto a chart.
-It may prevent the expert from binding to the ports.
+There are 2 types of requests that we can send:
+    exec - the request is sent, and a reply is waited for on the requests port (REQ/REP)
+    cmd  - the request is sent, and a reply is waited for on the subscibe port,
+           where the reply is by put in the return subscription as a 'retval' topic.
 
+The theory is that exec commands should be quick and not block the tick, and
+the cmd requests are for longer running commands. In practice this isn't
+implemented like that in the EA, and instead the collowing is true: use
+    exec - use exec for sending to the OTZmqCmdEA.mq4 (-e exec)
+    cmd - use cmd for sending to the OTPyZmqCmdEA.mq4 (-e cmd)
+Use the command line argument -e or --exectype.
+
+In fact even that is not true - this only works with OTZmqCmdEA.mq4 at the moment!
+
+We'll straighten this out later.
+
+MAYBE: do NOT run this until the expert has been loaded onto a chart.
+It may (but shouldn't) prevent the expert from binding to the ports.
+Also be sure to not keave it running between restarting Metatrader.
 """
 import sys
 import os
@@ -120,7 +138,7 @@ def lCreateContextSockets(oOptions):
         oReceiverSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
     s = oOptions.sIpAddress + ":" + str(oOptions.iSpeakerPort)
-    oSenderPubSocket = oContext.socket(zmq.PUB)
+    oSenderPubSocket = oContext.socket(zmq.REQ)
     if oOptions.iVerbose >= 1:
         vInfo("Requesting to:  " + s)
     oSenderPubSocket.connect("tcp://" + s)
@@ -214,7 +232,8 @@ def iMain():
                 sTopic = ""
                 time.sleep(10.0)
                 iSec += 10
-                sString = oReceiverSubSocket.recv()
+                # sString = oReceiverSubSocket.recv()
+                sString = oSenderPubSocket.recv()
                 if not sString: continue
                 
                 lElts = sString.split('|')

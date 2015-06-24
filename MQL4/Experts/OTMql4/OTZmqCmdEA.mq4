@@ -122,28 +122,29 @@ int OnInit() {
         }
         vInfo("bound the speaker on "+sBindAddress+":"+iSEND_PORT);
 
-        iLISTENER = zmq_socket(iCONTEXT, ZMQ_SUB);
+	uTopic = "cmd|";
+	uTopic = "";
+        iLISTENER = zmq_socket(iCONTEXT, ZMQ_REP);
         if (iLISTENER < 1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed allocating the listener " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-	sBindAddress = "*";
+	// sBindAddress = "*";
         if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iRECV_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iRECV_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
         vInfo("OnInit: bound the listener on "+sBindAddress+":"+iRECV_PORT);
- 	
-	uTopic = "cmd|";
-	uTopic = "";
+
+	if (uTopic != "") {
 	if (zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, uTopic) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed subscribing the listener to topic: "+uTopic+", iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-    
+	}
         GlobalVariableSet("fZmqSpeaker", iSPEAKER);
         GlobalVariableSet("fZmqListener", iLISTENER);
         GlobalVariableSet("fZmqContext", iCONTEXT);
@@ -239,31 +240,37 @@ void OnTimer() {
 	}
     }
     
-    vTrace("OnTimer: listening: ");
-    uMessage = zListen();
-    // uMessage = "";
-    // its non-blocking
+    uMessage = zReqRepListen();
+    // its non-blocking so it will usually be empty
     if ( uMessage == "" ) {return;}
-    
-    vTrace("OnTimer: got cmd message: " + uMessage);
-    uRetval = "";
+    vDebug("OnTimer: got message: " +uMessage);
+    vReqRepReply(uMessage);
+}
 
-    if (StringFind(uMessage, "exec", 0) == 0) {
-        vTrace("OnTimer: got exec message: " + uMessage);
+void vReqRepReply(string uMessage) {
+    string uRetval = "";
+    string uMess;
+    bool bRetval;
+    
+    //vTrace("vReqRepReply:: got message: " +uMessage);
+
+    // was: StringFind(uMessage, "exec", 0) == 0
+    if (true) {
+        //vTrace("vReqRepReply:: got exec message: " + uMessage);
         // execs are executed immediately and return a result on the wire
         // They're things that take less than a tick to evaluate
         //vTrace("Processing immediate exec message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
 	// WE INCLUDED THE SMARK
 	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
-        vDebug("OnTimer: Sending message back through iLISTENER: " + uMess);
-        bRetval=bZmqSend(iLISTENER, uMess);
+        vDebug("vReqRepReply:: Sending message back through iLISTENER: " + uMess);
+        bRetval = bZmqSend(iLISTENER, uMess);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
 
         vDebug("NOT Sending NULL message to: " + iLISTENER);
         //      bZmqSend(iLISTENER, "");
 
-        vTrace("Processing defered cmd message: " + uMessage);
+        //vTrace("Processing defered cmd message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);
         if (StringLen(uRetval) > 0) {
 	    // WE INCLUDED THE SMARK
@@ -278,12 +285,12 @@ void OnTimer() {
     }
 }
 
-string zListen() {
+string zReqRepListen() {
     string uMessage;
     
     iLISTENER=MathRound(GlobalVariableGet("fZmqListener"));
     if (iLISTENER < 1) {
-        vError("zListen: unallocated listener");
+        vError("zReqRepListen: unallocated listener");
         return("");
     }
     
@@ -296,7 +303,7 @@ string zListen() {
         // FixMe - investigate
         return("");
     }
-    vTrace("vListen: found message: " + uMessage);
+    //vTrace("zReqRepListen: found message: " + uMessage);
     return(uMessage);
 }
 
@@ -307,7 +314,7 @@ void OnTick() {
     bool bRetval;
     string s;
     string uInfo;
-    string uMess;
+    string uMessage;
 
     iSPEAKER=MathRound(GlobalVariableGet("fZmqSpeaker"));
     if (iSPEAKER < 1) {
@@ -327,19 +334,24 @@ void OnTick() {
         tNextbartime = tTime;
 	uInfo = "json|" + jOTBarInformation(uSYMBOL, Period(), 0) ;
         uType = "bar";
-        uMess  = zOTLibSimpleFormatBar(uType, uCHART_ID, 0, uTime, uInfo);
+        uMessage  = zOTLibSimpleFormatBar(uType, uCHART_ID, 0, uTime, uInfo);
     } else {
         iTICK += 1;
 	uInfo = "json|" + jOTTickInformation(uSYMBOL, Period()) ;
         uType = "tick";
-        uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
+        uMessage  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
     
-    bRetval = bZmqSend(iSPEAKER, uMess);
+    bRetval = bZmqSend(iSPEAKER, uMessage);
     if (bRetval == false) {
 	vWarn("OnTick: failed bZmqSend");
     }
 
-    //? vListen();
+    //vTrace("OnTick: listening: ");
+    uMessage = zReqRepListen();
+    // its non-blocking so it will usually be empty
+    if ( uMessage == "" ) {return;}
+    vDebug("OnTick: got message: " +uMessage);
+    vReqRepReply(uMessage);
 
 }

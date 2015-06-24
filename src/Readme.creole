@@ -1,7 +1,7 @@
 
 The source has to the Compiled DLL has now been moved to the
 https://github.com/OpenTrading/mql4zmq/
-to better document the changes we made in from the original source.
+to better document the changes we made in it from the original source.
 
 As a convenience, we have checked in the binaries from that project
 to the {{{src/mql4zmq}}} directory. In theory the files in this project
@@ -9,6 +9,8 @@ will always mirror that project, but that project is always master.
 
 In addition to being a convenience, checking them in here makes it
 absolutely certain which DLLs we are testing against.
+
+Note that in the process, we have rolled back to ZeroMQ v2.2.0.
 
 
 

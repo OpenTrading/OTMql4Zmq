@@ -12,5 +12,6 @@ You will need to be signed into github.com to see or edit in the wiki.
 * [[PyZmq]]
 * [[CompiledDllOTMql4Zmq]]
 * [[TestExpert]]
+* [[Scripts]]
 
 * [[TitleIndex]]
