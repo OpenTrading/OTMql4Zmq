@@ -1,8 +1,14 @@
 
-The source checked in to the `src/mql4zmq` directory is from:
-`git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq`
+The source has to the Compiled DLL has now been moved to the
+https://github.com/OpenTrading/mql4zmq/
+to better document the changes we made in from the original source.
 
-The include file `zmq.h`in the `src/mql4zmq` directory is from:
-zeromq-4.0.4/include/zmq.h
+As a convenience, we have checked in the binaries from that project
+to the {{{src/mql4zmq}}} directory. In theory the files in this project
+will always mirror that project, but that project is always master.
+
+In addition to being a convenience, checking them in here makes it
+absolutely certain which DLLs we are testing against.
+
 
 
