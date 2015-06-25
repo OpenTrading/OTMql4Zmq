@@ -43,7 +43,7 @@ There are 2 types of requests that we can send:
 
 The theory is that exec commands should be quick and not block the tick, and
 the cmd requests are for longer running commands. In practice this isn't
-implemented like that in the EA, and instead the collowing is true: use
+implemented like that in the EA, and instead the following is true: use
     exec - use exec for sending to the OTZmqCmdEA.mq4 (-e exec)
     cmd - use cmd for sending to the OTPyZmqCmdEA.mq4 (-e cmd)
 Use the command line argument -e or --exectype.

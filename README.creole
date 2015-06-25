@@ -15,8 +15,7 @@ With ZeroMQ http://zeromq.org/ you can:
 There are now two ways of using ZeroMq via in this package:
 
 1. Directly using compiled DLL. We are having problems with the compiled DLL,
-   where messages are being sent by Mt4 work but it's not receiving them.
-   See
+   but these may now be fixed, as we have dropped back to ZeroMQ v2.2.0.  See
    CompiledDllOTMql4Zmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq).
    
 2. Through PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
@@ -41,11 +40,21 @@ OTMql4Zmq works with Metatrader on builds > 6xx, but the test suite and document
 still need writing, as well as testing on different versions of
 Windows and Mt4.
 
-ZeroMQ 4.x is now partitally supported. It's being compiled against a v4.0.4
-release of ZeroMQ (http://zeromq.org), but only part of the API changes are
-in the {{{src/mql4zmq/mql4zmq.[ch]}}}. If anyone is good at MSVC and ZeroMQ,
-if you could look at the code in that directory and check for version improvements,
-we'd be grateful.
+ZeroMQ 4.x is not yet supported. The source code for the Compiled DLL has been moved to
+https://github.com/OpenTrading/mql4zmq/
+to better document the changes we made in it from the original source.
+As a convenience, we have checked in the binaries from that project
+to the {{{src/mql4zmq}}} directory. In theory the files in this project
+will always mirror that project, but that project is always master.
+
+mql4zmq (https://github.com/OpenTrading/mql4zmq) is being compiled against a v2.2.0
+release of ZeroMQ (http://zeromq.org). If anyone is good at MSVC and ZeroMQ,
+if you could look at the code in that project and help us with ZeroMQ 4.x
+version improvements, we'd be grateful. In general, you can use any version of
+ZeroMQ later than v2.2.0 to communicate with the
+mql4zmq (https://github.com/OpenTrading/mql4zmq) libraries, so for example you can
+use the latest PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq) for
+client scripts: see Scripts (https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts).
 
 The project wiki should be open for editing by anyone logged into GitHub:
 **Please report any system it works or doesn't work on in the wiki:
@@ -63,7 +72,8 @@ not overwrite any system files, and keeps its files in subdirectories
 called {{{OTMql4}}}.
 
 See PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
-for instructions for installing into your Python.
+for instructions for installing into your Python; you wil need this either
+to run th
 
 === Project
 

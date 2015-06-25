@@ -1,3 +1,8 @@
+commit 342c29f72262e02fc990198f0f5cfdf642f7ee45
+Date:   Wed Jun 24 21:36:28 2015 +0300
+
+    Partial checkin of the changes to get OTZmqCmdEA.mq4 working usinh ZeroMQ v2.2.0
+
 commit 9675f7c2c0599a0947b0e949adb7edf6f92857b1
 Date:   Wed Jun 24 20:59:02 2015 +0300
 
