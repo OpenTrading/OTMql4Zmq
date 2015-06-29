@@ -5,6 +5,7 @@
 * [[CompiledDllOTMql4Zmq]]
 * [[FrontPage]]
 * [[Home]]
+* [[Installation]]
 * [[PyZmq]]
 * [[PythonOTMql4Zmq]]
 * [[RoadMap]]

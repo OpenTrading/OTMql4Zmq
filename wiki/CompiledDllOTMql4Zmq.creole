@@ -3,35 +3,20 @@
 These problems may be fixed now; test it add your results as comments to
 https://github.com/OpenTrading/OTMql4Zmq/issues/1
 
-We replaced {{{MQL4/Libraries/OTMql4/libzmq.dll}}} with {{{libzmq-v100-mt-4_0_4.dll}}}
-from the official ZeroMQ distribution and at least sending from MT4 is working fine:
-http://miru.hk/archive/ZeroMQ-4.0.4~miru1.0-x86.exe
+We replaced {{{MQL4/Libraries/OTMql4/libzmq.dll}}} with
+{{{libzmq-v100-mt-2_2_0.dll}}} that we compiled with MSVC2010
+according to the original instructions. These are being tracked in
+https://github.com/OpenTrading/mql4zmq/
 
-=== Problems
-
-We were having **big** problems with the receiving of messages by Mt4 with the compiled
-DLL: but sending from Mt appears to work fine.
-
-We are having **big** problems with the receiving of messages from Mt4 with the
-compiled DLL: it doesn't work. See:
-https://github.com/OpenTrading/OTMql4Zmq/issues/1
-
-**In summary, the compiled DLL OTMql4Zmq is unusable for receiving for now,
-until someone who knows C can figure it out**. Sending from Mt4 works fine.
-
-=== Compiled DLL Changes
-
-The source checked in to the {{{src/}}} directory is from:
-{{{
-git clone -b MQ_610_ZMQ_4 --single-branch https://github.com/ungratefulson/mql4zmq
-}}}
-
-This has the very simple changes needed to run against ZeroMQ 4.0.x.
-We deleted the {{{.mqh}}} file, as that was not updated for Build 600,
-and is replaced with our version in the {{{MQL4/Include/OTMql4}}} directory.
-
-We also deleted the {{{examples/}}} directory as we will have new Python
-scripts in {{{bin/}}} and those examples do not use our nomenclature.
+We tried using those same instructions to compile against v4.0.4,
+and sending from Mt4 works, but we still have to rewrite the glue code
+for the version 4 changes. We'll test v2.2.0 for a while first.
 
 For an example expert for using the Compiled Dll OTMql4Zmq,
 see [[TestExpert]].
+
+=== Compiled DLL Changes
+
+The libraries checked in to the {{{src/}}} directory is from:
+https://github.com/OpenTrading/mql4zmq/
+and any changes and issues will be tracked there.

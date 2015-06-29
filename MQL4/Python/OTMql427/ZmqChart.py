@@ -31,9 +31,9 @@ class ZmqChart(Mq4Chart):
         if oCONTEXT is None:
             oCONTEXT = zmq.Context()
         self.oSpeakerPubSocket = None
-        self.oListenerSubSocket = None
-        self.iSpeakerPort = dParams.get('iSpeakerPort', 0)
-        self.iListenerPort = dParams.get('iListenerPort', 0)
+        self.oListenerRepSocket = None
+        self.iReqRepPort = int(dParams.get('sSubPubPort', 2027))
+        self.iSubPubPort = int(dParams.get('sReqRepPort', 2028))
         self.sIpAddress = dParams.get('sIpAddress', '127.0.0.1')
         self.sChartId = sChartId
 
@@ -46,20 +46,20 @@ class ZmqChart(Mq4Chart):
         """
         # while we are here flush stdout so we can read the log file
         # whilst the program is running
-        print "recving on the listener "
+        print "receiving on the listener "
         sys.stdout.flush()
         try:
             sBody = self.sRecvOnListener()
         except Exception , e:
-            print "error on the listener "+str(e)
+            print "Error eHeartBeat on the listener "+str(e)
             print traceback.format_exc()
             sys.stdout.flush()
             raise
         if sBody:
-            print "pushing on the queue " + sBody
+            print "pushing eHeartBeat on the queue " + sBody
             self.eMq4PushQueue(sBody)
         elif self.oQueue.empty():
-            sTopic = 'exec'
+            sTopic = 'ignore'
             sMark = "%15.5f" % time.time()
             sMess = "%s|%s|0|%s|Print|PY: %s" % (sTopic, self.sChartId, sMark, sMark,)
             print "only pushing on the queue as there is nothing to do"
@@ -72,12 +72,27 @@ class ZmqChart(Mq4Chart):
         """
         if self.oSpeakerPubSocket is None:
             oSpeakerPubSocket = oCONTEXT.socket(zmq.PUB)
-            assert self.iSpeakerPort, "eBindSpeaker: iSpeakerPort is null"
-            oSpeakerPubSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iSpeakerPort,))
+            assert self.iReqRepPort, "eBindSpeaker: iReqRepPort is null"
+            oSpeakerPubSocket.bind('tcp://%s:%d' % (self.sIpAddress, self.iReqRepPort,))
             time.sleep(0.1)
             self.oSpeakerPubSocket = oSpeakerPubSocket
 
-    def eBindListener(self):
+    def eBindListener(self, lTopics=None):
+        """
+        We bind on our Metatrader end, and connect from the scripts.
+        """
+        if self.oListenerRepSocket is None:
+            sys.stdout.flush()
+            oListenerRepSocket = oCONTEXT.socket(zmq.REP)
+            assert self.iSubPubPort, "eBindListener: iSubPubPort is null"
+            sUrl = 'tcp://%s:%d' % (self.sIpAddress, self.iSubPubPort,)
+            print "eBindListener: Binding REP to " +sUrl
+            sys.stdout.flush()
+            oListenerRepSocket.bind(sUrl)
+            self.oListenerRepSocket = oListenerRepSocket
+
+    # unused - unwired
+    def eBindSubscribeListener(self, lTopics=None):
         """
         We bind on our Metatrader end, and connect from the scripts.
         """
@@ -85,13 +100,15 @@ class ZmqChart(Mq4Chart):
             print "creating a listener SUB socket " 
             sys.stdout.flush()
             oListenerSubSocket = oCONTEXT.socket(zmq.SUB)
-            assert self.iListenerPort, "eBindListener: iListenerPort is null"
-            sUrl = 'tcp://%s:%d' % (self.sIpAddress, self.iListenerPort,)
+            assert self.iSubPubPort, "eBindListener: iSubPubPort is null"
+            sUrl = 'tcp://%s:%d' % (self.sIpAddress, self.iSubPubPort,)
             print "Binding SUB to " + sUrl
             sys.stdout.flush()
             oListenerSubSocket.bind(sUrl)
             time.sleep(0.1)
-            for sElt in ['cmd', 'exec']:
+            if lTopics is None:
+                lTopics = ['']
+            for sElt in lTopics:
                 oListenerSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
             self.oListenerSubSocket = oListenerSubSocket
 
@@ -113,38 +130,61 @@ class ZmqChart(Mq4Chart):
         if self.oSpeakerPubSocket is None:
             self.eBindSpeaker()
         assert self.oSpeakerPubSocket, "eSendOnSpeaker: oSpeakerPubSocket is null"
-        self.oSpeakerPubSocket.send_multipart([sTopic, sMsg])
+        self.oSpeakerPubSocket.send(sMsg)
         return ""
 
     def sRecvOnListener(self):
-        if self.oListenerSubSocket is None:
+        if self.oListenerRepSocket is None:
             self.eBindListener()
-        assert self.oListenerSubSocket, "sRecvOnListener: oListenerSubSocket is null"
-        print "Recv on non-blocking listener"
-        sys.stdout.flush()
+        assert self.oListenerRepSocket, "sRecvOnListener: oListenerRepSocket is null"
         try:
-            sTopic, sRetval = self.oListenerSubSocket.recv_multipart(flags=zmq.NOBLOCK)
-            # sRetval = self.oListenerSubSocket.recv(flags=zmq.NOBLOCK)
-            print "Recved on non-blocking listener: " +sRetval
-            sys.stdout.flush()
+            sRetval = self.oListenerRepSocket.recv(flags=zmq.NOBLOCK)
+        except zmq.ZMQError:
+            # zmq.error.Again
+            iError = zmq.zmq_errno()
+            if iError == zmq.EAGAIN:
+                time.sleep(1.0)
+            else:
+                print "sRecvOnListener: ZMQError in Recv listener", iError, zmq.strerror(iError)
+                sys.stdout.flush()
+            sRetval = ""
         except Exception, e:
-            # zmq.error.Again in 4.0.5 but not here
-            print "Failed Recv listener: " +str(e)
+            print "sRecvOnListener: Failed Recv listener: " +str(e)
             sys.stdout.flush()
             sRetval = ""
         return sRetval
 
-    def bCloseContextSockets(self, lOptions):
+    def eReturnOnListener(self, sTopic, sMsg, sOrigin=None):
+        return self.eSendOnListener(sTopic, sMsg, sOrigin=None)
+
+    def eSendOnListener(self, sTopic, sMsg, sOrigin=None):
+        # we may send back null strings
+        if sOrigin and sMsg and sMsg != "null":
+	    # This message is a reply in a cmd
+            lOrigin = sOrigin.split("|")
+            assert lOrigin[0] in ['exec', 'cmd'], "eSendOnSpeaker: lOrigin[0] in ['exec', 'cmd'] " +repr(lOrigin)
+            sMark = lOrigin[3]
+            lMsg = sMsg.split("|")
+            assert lMsg[0] == 'retval', "eSendOnSpeaker: lMsg[0] in ['retval'] " +repr(lMsg)
+            lMsg[3] = sMark
+	    # Replace the mark in the reply with the mark in the cmd
+            sMsg = '|'.join(lMsg)
+            
+        assert self.oListenerRepSocket, "eSendOnSpeaker: oListenerRepSocket is null"
+        self.oListenerRepSocket.send(sMsg)
+        return ""
+
+    def bCloseContextSockets(self, oOptions):
         global oCONTEXT
-        if self.oListenerSubSocket:
-            self.oListenerSubSocket.setsockopt(zmq.LINGER, 0)
+        if self.oListenerRepSocket:
+            self.oListenerRepSocket.setsockopt(zmq.LINGER, 0)
             time.sleep(0.1)
-            self.oListenerSubSocket.close()
+            self.oListenerRepSocket.close()
         if self.oSpeakerPubSocket:
             self.oSpeakerPubSocket.setsockopt(zmq.LINGER, 0)
             time.sleep(0.1)
             self.oSpeakerPubSocket.close()
-        if lOptions and lOptions.iVerbose >= 1:
+        if oOptions and oOptions.iVerbose >= 1:
             print("INFO: destroying the context")
         sys.stdout.flush()
         time.sleep(0.1)
@@ -160,15 +200,15 @@ def iMain():
     lArgs = oOptions.lArgs
 
     assert lArgs, "comand line arguments are required"
-    iSpeakerPort = int(lOptions.sPubPort)
-    assert iSpeakerPort > 0 and iSpeakerPort < 66000
-    sIpAddress = lOptions.sIpAddress
+    iReqRepPort = int(oOptions.sReqRepPort)
+    assert iReqRepPort > 0 and iReqRepPort < 66000
+    sIpAddress = oOptions.sIpAddress
     assert sIpAddress
 
     try:
-        if lOptions.iVerbose >= 1:
-            print "Publishing to: " +sIpAddress +":" +str(iSpeakerPort) + \
-                " with topic: " +lOptions.sTopic +" ".join(lArgs)
+        if oOptions.iVerbose >= 1:
+            print "Publishing to: " +sIpAddress +":" +str(iReqRepPort) + \
+                " with topic: " +oOptions.sTopic +" ".join(lArgs)
         o = ZmqChart('oUSDUSD_0_ZMQ_0', **oOptions.__dict__)
         sMsg = 'Hello'
         iMax = 10
@@ -176,14 +216,14 @@ def iMain():
         print "Sending: %s %d times " % (sMsg, iMax,)
         while i < iMax:
             # send a burst of 10 copies
-            o.eSendOnSpeaker(lOptions.sTopic, lArgs[0])
+            o.eSendOnSpeaker(oOptions.sTopic, lArgs[0])
             i += 1
         # print "Waiting for message queues to flush..."
         time.sleep(1.0)
     except KeyboardInterrupt:
         pass
     finally:
-        o.bCloseContextSockets(lOptions)
+        o.bCloseContextSockets(oOptions)
 
 if __name__ == '__main__':
     iMain()

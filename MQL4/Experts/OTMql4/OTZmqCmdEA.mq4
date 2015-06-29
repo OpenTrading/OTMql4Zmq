@@ -12,8 +12,8 @@ and
 #property link      "https://github.com/OpenTrading/"
 #property strict
 
-extern int iSEND_PORT=2027;
-extern int iRECV_PORT=2028;
+extern int iSUBPUB_PORT=2027;
+extern int iREPREQ_PORT=2028;
 // can replace this with the IP address of an interface - not lo
 extern string sBindAddress="127.0.0.1";
 
@@ -24,7 +24,7 @@ extern string sBindAddress="127.0.0.1";
 #include <OTMql4/OTZmqProcessCmd.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
 #include <OTMql4/ZmqSendReceive.mqh>
-//#include <OTMql4/ZmqConstants.mqh>
+#include <OTMql4/ZmqConstants.mqh>
 
 #include <WinUser32.mqh>
 
@@ -115,14 +115,13 @@ int OnInit() {
             vPanic("OnInit: failed allocating the speaker " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        if (zmq_bind(iSPEAKER,"tcp://"+sBindAddress+":"+iSEND_PORT) == -1) {
+        if (zmq_bind(iSPEAKER,"tcp://"+sBindAddress+":"+iSUBPUB_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the speaker on "+sBindAddress+":"+iSEND_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
+            vPanic("OnInit: failed binding the speaker on "+sBindAddress+":"+iSUBPUB_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        vInfo("bound the speaker on "+sBindAddress+":"+iSEND_PORT);
+        vInfo("bound the speaker on "+sBindAddress+":"+iSUBPUB_PORT);
 
-	uTopic = "cmd|";
 	uTopic = "";
         iLISTENER = zmq_socket(iCONTEXT, ZMQ_REP);
         if (iLISTENER < 1) {
@@ -131,13 +130,14 @@ int OnInit() {
             return(-1);
         }
 	// sBindAddress = "*";
-        if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iRECV_PORT) == -1) {
+        if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iREPREQ_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iRECV_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
+            vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iREPREQ_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        vInfo("OnInit: bound the listener on "+sBindAddress+":"+iRECV_PORT);
+        vInfo("OnInit: bound the listener on "+sBindAddress+":"+iREPREQ_PORT);
 
+	// old unused code for sub instead of rep
 	if (uTopic != "") {
 	if (zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, uTopic) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
@@ -254,8 +254,7 @@ void vReqRepReply(string uMessage) {
     
     //vTrace("vReqRepReply:: got message: " +uMessage);
 
-    // was: StringFind(uMessage, "exec", 0) == 0
-    if (true) {
+    if (StringFind(uMessage, "exec", 0) == 0) {
         //vTrace("vReqRepReply:: got exec message: " + uMessage);
         // execs are executed immediately and return a result on the wire
         // They're things that take less than a tick to evaluate
@@ -267,8 +266,8 @@ void vReqRepReply(string uMessage) {
         bRetval = bZmqSend(iLISTENER, uMess);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
 
-        vDebug("NOT Sending NULL message to: " + iLISTENER);
-        //      bZmqSend(iLISTENER, "");
+        vDebug("Sending NULL message to: " + iLISTENER);
+        bZmqSend(iLISTENER, "null");
 
         //vTrace("Processing defered cmd message: " + uMessage);
         uRetval = zOTZmqProcessCmd(uMessage);

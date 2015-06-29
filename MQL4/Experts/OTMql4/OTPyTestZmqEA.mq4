@@ -6,8 +6,8 @@
 
 #define INDICATOR_NAME          "PyTestZmqEA"
 
-extern int iSEND_PORT=2027;
-extern int iRECV_PORT=2028;
+extern int iSUBPUB_PORT=2027;
+extern int iREPREQ_PORT=2028;
 // can replace this with the IP address of an interface - not lo
 extern string uBIND_ADDRESS="127.0.0.1";
 extern string uStdOutFile="../../Logs/_test_PyTestZmqEA.txt";
@@ -27,6 +27,7 @@ Change to suit your own needs.
 #include <OTMql4/OTLibJsonFormat.mqh>
 #include <OTMql4/OTLibPy27.mqh>
 #include <OTMql4/OTPyChart.mqh>
+#include <OTMql4/ZmqConstants.mqh>
 
 int iCONTEXT = -1;
 double fPY_ZMQ_CONTEXT_USERS = 0.0;
@@ -82,8 +83,8 @@ int OnInit() {
         }
         vPyExecuteUnicode("from OTMql427 import ZmqChart");
         vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
-                          "iSpeakerPort=" + iSEND_PORT + ", " +
-                          "iListenerPort=" + iRECV_PORT + ", " +
+                          "iReqRepPort=" + iSUBPUB_PORT + ", " +
+                          "iSubPubPort=" + iREPREQ_PORT + ", " +
                           "sIpAddress='" + uBIND_ADDRESS + "', " +
                           "iDebugLevel=" + MathRound(fDebugLevel) + ", " +
                           ")");
@@ -104,6 +105,7 @@ int OnInit() {
 
     }
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
+    vInfo("OnInit: Incremented fZmqContextUsers to "+ MathRound(fPY_ZMQ_CONTEXT_USERS) + " with iCONTEXT: " + iCONTEXT);
 
     EventSetTimer(iTIMER_INTERVAL_SEC);
     vDebug("OnInit: fPyZmqContextUsers=" + fPY_ZMQ_CONTEXT_USERS);
@@ -112,36 +114,42 @@ int OnInit() {
 }
 
 string ePyZmqPopQueue(string uChartId) {
-    string uRetval, uMess;
+    string uIncoming, uOutgoing;
 
     // There may be sleeps for threads here
     // We may want to loop over zMq4PopQueue to pop many commands
-    uRetval = uPySafeEval(uChartId+".zMq4PopQueue()");
-    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
-        uRetval = "ERROR: zMq4PopQueue failed: "  + uRetval;
-        vWarn("ePyZmqPopQueue: " +uRetval);
-        return(uRetval);
+    uIncoming = uPySafeEval(uChartId+".zMq4PopQueue()");
+    if (StringFind(uIncoming, "ERROR:", 0) >= 0) {
+        uIncoming = "ERROR: zMq4PopQueue failed: "  + uIncoming;
+        vWarn("ePyZmqPopQueue: " +uIncoming);
+        return(uIncoming);
     }
 
-    // the uRetval will be empty if there is nothing to do.
-    if (uRetval == "") {
-        //vTrace("ePyZmqPopQueue: " +uRetval);
+    // the uIncoming will be empty if there is nothing to do.
+    if (uIncoming == "") {
+        //vTrace("ePyZmqPopQueue: " +uIncoming);
     } else {
-        // vTrace("ePyZmqPopQueue: Processing popped exec message: " + uRetval);
-        uMess = zOTZmqProcessCmd(uRetval);
-        if (StringFind(uRetval, "void|", 0) >= 0) {
+        // vTrace("ePyZmqPopQueue: Processing popped exec message: " + uIncoming);
+        uOutgoing = zOTZmqProcessCmd(uIncoming);
+        if (StringFind(uOutgoing, "void|", 0) >= 0) {
             // can be "void|" return value
-        } else if (StringFind(uRetval, "cmd|", 0) >= 0) {
+        } else if (StringFind(uIncoming, "ignore|", 0) >= 0) {
+            // can be "void|" return value
+        } else if (StringFind(uIncoming, "cmd|", 0) >= 0) {
             // if the command is cmd|  - return a value as a retval|
-            // FixMe: We want the sMark from uRetval instead of uTime
+            // FixMe: We want the sMark from uIncoming instead of uTime
             // but we will do than in Python
 	    // WE INCLUDED THE SMARK
-            uMess  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uMess);
-            eReturnOnSpeaker(uChartId, "retval", uMess, uRetval);
-            vDebug("ePyZmqPopQueue: retvaled " +uMess);
+            uOutgoing  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uOutgoing);
+            eSendOnSpeaker(uChartId, "retval", uOutgoing, uIncoming);
+            eReturnOnListener(uChartId, "retval", "null", uIncoming);
+            vDebug("ePyZmqPopQueue: eSendOnSpeaker " +uOutgoing);
         } else {
-            // if the command is exec| - dont return a value
-            vDebug("ePyZmqPopQueue: processed " +uMess);
+            // if the command is exec| - return as a REP on the listener
+	    // WE INCLUDED THE SMARK
+            uOutgoing  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uOutgoing);
+            eReturnOnListener(uChartId, "retval", uOutgoing, uIncoming);
+            vDebug("ePyZmqPopQueue: eReturnOnListener " +uOutgoing);
         }
     }
     return("");
@@ -192,7 +200,7 @@ void OnTimer() {
 
     uInfo = "json|" + jOTTimerInformation();
     uMess  = zOTLibSimpleFormatTimer(uType, uCHART_ID, 0, uTime, uInfo);
-    eSendOnSpeaker(uCHART_ID, "timer", uMess);
+    eSendOnSpeaker(uCHART_ID, "timer", uMess, "");
 }
 
 void OnTick() {
@@ -232,7 +240,7 @@ void OnTick() {
         uType = "tick";
         uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
-    eSendOnSpeaker(uCHART_ID, uType, uMess);
+    eSendOnSpeaker(uCHART_ID, uType, uMess, "");
 }
 
 void OnDeinit(const int iReason) {

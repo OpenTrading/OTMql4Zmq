@@ -24,13 +24,9 @@ There are 2 types of requests that we can send:
            where the reply is by put in the return subscription as a 'retval' topic.
 
 The theory is that exec commands should be quick and not block the tick, and
-the cmd requests are for longer running commands. In practice this isn't
-implemented like that in the EA, and instead the collowing is true: use
-    exec - use exec for sending to the OTZmqCmdEA.mq4 (-e exec)
-    cmd - use cmd for sending to the OTPyZmqCmdEA.mq4 (-e cmd)
-Use the command line argument -e or --exectype.
-
-In fact even that is not true - this only works with OTZmqCmdEA.mq4 at the moment!
+the cmd requests are for longer running commands. In practice, the async cmd
+doesn't always see the retval - it's sent and Mt4 sends the answer, but
+we are not always seeing it. So the code is hardwired to exec for the moment.
 
 We'll straighten this out later.
 
@@ -55,44 +51,6 @@ def sMakeMark():
 class MqlError(RuntimeError):
     pass
 
-def oOptionParser():
-    sUsage = __doc__.strip()
-    parser = OptionParser(usage=sUsage)
-    parser.add_option("-s", "--subport", action="store", dest="iListenerPort", type="int",
-                      default=2027,
-                      help="the TCP port number to subscribe to")
-    parser.add_option("-p", "--pubport", action="store", dest="iSpeakerPort", type="int",
-                      default=2028,
-                      help="the TCP port number to publish to")
-    parser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
-                      default="127.0.0.1",
-                      help="the TCP address to subscribe on")
-    parser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
-                      default="ANY",
-                      help="the chart ID")
-    parser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
-                      default=60,
-                      help="timeout in seconds to wait for a reply (60)")
-    parser.add_option("-e", "--exectype", action="store", dest="sExecType", type="string",
-                      default="default",
-                      help="exectype: one of cmd or exec or default (default)")
-    parser.add_option("-v", "--verbose", action="store", dest="iVerbose", type="int",
-                      default=2,
-                      help="the verbosity, 0 for silent, up to 4 (1)")
-    return parser
-
-def lGetOptionsArgs():
-    parser = oOptionParser()
-    (oOptions, lArgs,) = parser.parse_args()
-
-    assert int(oOptions.iListenerPort) > 0 and int(oOptions.iListenerPort) < 66000
-    # if iSpeakerPort is > 0 then request a Zmq version query
-    assert int(oOptions.iSpeakerPort) >= 0 and int(oOptions.iSpeakerPort) < 66000
-    oOptions.iVerbose = int(oOptions.iVerbose)
-    assert 0 <= oOptions.iVerbose <= 5
-    assert oOptions.sIpAddress
-
-    return (oOptions, lArgs,)
 
 dPENDING=dict()
 def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, oOptions):
@@ -129,7 +87,7 @@ def bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOption
 def lCreateContextSockets(oOptions):
     oContext = zmq.Context()
     oReceiverSubSocket = oContext.socket(zmq.SUB)
-    s = oOptions.sIpAddress+":"+str(oOptions.iListenerPort)
+    s = oOptions.sIpAddress+":"+str(oOptions.iSubPubPort)
     if oOptions.iVerbose >= 1:
         vInfo("Subscribing to: " + s)
     oReceiverSubSocket.connect("tcp://"+s)
@@ -137,7 +95,7 @@ def lCreateContextSockets(oOptions):
     for sElt in oOptions.lTopics:
         oReceiverSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
-    s = oOptions.sIpAddress + ":" + str(oOptions.iSpeakerPort)
+    s = oOptions.sIpAddress + ":" + str(oOptions.iReqRepPort)
     oSenderPubSocket = oContext.socket(zmq.REQ)
     if oOptions.iVerbose >= 1:
         vInfo("Requesting to:  " + s)
@@ -145,7 +103,6 @@ def lCreateContextSockets(oOptions):
     return (oContext, oReceiverSubSocket, oSenderPubSocket,)
 
 def sDefaultExecType(sRequest):
-    return "cmd"
     if sRequest.startswith("Account") or \
         sRequest.startswith("Terminal") or \
         sRequest.startswith("Window") or \
@@ -189,6 +146,46 @@ def gRetvalToPython(sString, lElts):
         return None
     return gRetval
 
+def oOptionParser():
+    sUsage = __doc__.strip()
+    parser = OptionParser(usage=sUsage)
+    parser.add_option("-s", "--subport", action="store", dest="iSubPubPort", type="int",
+                      default=2027,
+                      help="the TCP port number to subscribe to")
+    parser.add_option("-r", "--reqport", action="store", dest="iReqRepPort", type="int",
+                      default=2028,
+                      help="the TCP port number to request to")
+    parser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
+                      default="127.0.0.1",
+                      help="the TCP address to subscribe on")
+    parser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
+                      default="ANY",
+                      help="the chart ID")
+    parser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
+                      default=60,
+                      help="timeout in seconds to wait for a reply (60)")
+    parser.add_option("-e", "--exectype", action="store", dest="sExecType", type="string",
+                      default="exec",
+                      # FixMe:
+                      help="exectype: one of cmd or exec or default (only exec works for now)")
+    parser.add_option("-v", "--verbose", action="store", dest="iVerbose", type="int",
+                      default=2,
+                      help="the verbosity, 0 for silent, up to 4 (1)")
+    return parser
+
+def lGetOptionsArgs():
+    parser = oOptionParser()
+    (oOptions, lArgs,) = parser.parse_args()
+
+    assert int(oOptions.iSubPubPort) > 0 and int(oOptions.iSubPubPort) < 66000
+    # if iReqRepPort is > 0 then request a Zmq version query
+    assert int(oOptions.iReqRepPort) >= 0 and int(oOptions.iReqRepPort) < 66000
+    oOptions.iVerbose = int(oOptions.iVerbose)
+    assert 0 <= oOptions.iVerbose <= 5
+    assert oOptions.sIpAddress
+
+    return (oOptions, lArgs,)
+
 def iMain():
     global dPENDING
 
@@ -219,7 +216,8 @@ def iMain():
                 sType = "exec"
             else:
                 sType = "cmd"
-            sType = "cmd"
+            # only exec really works right now - cmd misses the retval sometimes
+            sType = "exec"
 
             sMarkIn = sMakeMark()
             sRetval = sPushToPending(sMarkIn, sRequest, oSenderPubSocket, sType, oOptions)
@@ -232,8 +230,18 @@ def iMain():
                 sTopic = ""
                 time.sleep(10.0)
                 iSec += 10
-                # sString = oReceiverSubSocket.recv()
-                sString = oSenderPubSocket.recv()
+
+                if sType == "cmd":
+                    # sent as a ReqRep but comes back on SubPub
+                    try:
+                        sString = oReceiverSubSocket.recv(zmq.NOBLOCK)
+                    except zmq.error.Again:
+                        continue
+                    if not sString: continue
+                else:
+                    # sent as a ReqRep and comes back on comes back on ReqRep
+                    # I think this is blocking
+                    sString = oSenderPubSocket.recv()
                 if not sString: continue
                 
                 lElts = sString.split('|')
@@ -244,13 +252,17 @@ def iMain():
                 elif sString.startswith('timer'):
                     print sString
                 elif sString.startswith('retval'):
-                    print sString
-
                     sMarkOut = lElts[3]
                     if sMarkOut not in dPENDING.keys():
                         print "WARN: %s not found in: %r" % (sMarkOut, dPENDING.keys())
-                        continue
-                    del dPENDING[sMarkOut]
+                    else:
+                        del dPENDING[sMarkOut]
+                    
+                    print "INFO: ", sType, sMarkOut, sString
+                    if sType == "cmd":
+                        # there's still a null that comes back on ReqRep
+                        sNull = oSenderPubSocket.recv()
+                        # zmq.error.ZMQError
                         
                     try:
                         gRetval = gRetvalToPython(sString, lElts)

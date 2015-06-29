@@ -14,8 +14,8 @@ With ZeroMQ http://zeromq.org/ you can:
 
 There are now two ways of using ZeroMq via in this package:
 
-1. Directly using compiled DLL. We are having problems with the compiled DLL,
-   but these may now be fixed, as we have dropped back to ZeroMQ v2.2.0.  See
+1. Directly using compiled DLL. We were having problems with the compiled DLL,
+   but these are now fixed, as we have dropped back to ZeroMQ v2.2.0.  See
    [[CompiledDllOTMql4Zmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq]].
    
 2. Through [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]]

@@ -17,20 +17,21 @@ def oParseOptions(sUsage):
     can override it before you call it to parse_args.
     """
     oArgParser = ArgumentParser(description=sUsage)
-    oArgParser.add_argument("-p", "--pubport", action="store",
-                            dest="sPubPort",
-                            default="2027",
-                            help="the TCP port number to publish to (default 2027)")
     oArgParser.add_argument("-a", "--address", action="store",
                             dest="sIpAddress",
                             default="127.0.0.1",
                             help="the TCP address to subscribe on (default 127.0.0.1)")
+    oArgParser.add_argument("-s", "--subport", action="store",
+                            dest="sSubPubPort",
+                            default="2027",
+                            help="the TCP port number to subscribe to (default 2027)")
+    oArgParser.add_argument("-r", "--reqport", action="store",
+                            dest="sReqRepPort",
+                            default="2028",
+                            help="the TCP port number to request to (default 2028)")
     oArgParser.add_argument("-v", "--verbose", action="store",
                             dest="iVerbose",
-                            default="1",
+                            type=int,
+                            default=1,
                             help="the verbosity, 0 for silent 4 max (default 1)")
-    oArgParser.add_argument("-t", "--topic", action="store",
-                            dest="sTopic",
-                            default="retval",
-                            help="the topic the subcriber will be looking for (default retval)")
     return(oArgParser)

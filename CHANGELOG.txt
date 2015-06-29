@@ -1,3 +1,8 @@
+commit 12d26790d3403a2d3993e44184d9ea1bd581ef03
+Date:   Thu Jun 25 08:47:12 2015 +0300
+
+    Moved MQL4/Include/OTMql4/ZmqConstants.mqh to the mql4zmq project
+
 commit 342c29f72262e02fc990198f0f5cfdf642f7ee45
 Date:   Wed Jun 24 21:36:28 2015 +0300
 

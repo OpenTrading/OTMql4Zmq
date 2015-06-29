@@ -1,0 +1,36 @@
+
+=== Installation
+
+In general, recusively copy everything in the {{{MQL4}}} directory
+to your {{{c:\Program Files\[metatrader directory]\MQL4}}} directory.
+
+This is the same making the following 3 directories if they don't aleady exist:
+* {{{c:\Program Files\[metatrader directory]\MQL4\Experts\OTMql4}}}
+* {{{c:\Program Files\[metatrader directory]\MQL4\Include\OTMql4}}}
+* {{{c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4}}}
+and then copying:
+{{{
+MQL4\Include\OTMql4\*.mqh
+=> c:\Program Files\[metatrader directory]\MQL4\Include\OTMql4
+
+MQL4\Libraries\OTMql4\*.mqh
+=> c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4
+
+MQL4\Experts\OTMql4\*.mq4 
+=> c:\Program Files\[metatrader directory]\MQL4\Experts\OTMql4
+}}}
+
+This will help make this project compatible with other OpenTrader projects,
+and will simplify the release-packaging later. Also by giving files different names
+from Austen Conrad, we help avoid collisions in case someone has both projects.
+
+Then copy the DLL files to the right places:
+{{{
+src\mql4zmq\pre-compiled\mql4zmq.dll
+=> c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4\mql4zmq.dll
+
+src\mql4zmq\pre-compiled\libzmq.dll
+=> c:\Windows\SysWOW64\libzmq.dll or
+=> c:\Windows\System32\libzmq.dll or
+whatever the windows system library is for your version of Windows.
+}}}

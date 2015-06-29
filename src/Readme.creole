@@ -12,5 +12,5 @@ absolutely certain which DLLs we are testing against.
 
 Note that in the process, we have rolled back to ZeroMQ v2.2.0.
 
-
-
+See the Installation page in the {{{wiki}} directory for instructions
+on where the DLL files in {{{src/mql4zmq/pre-compiled/}}} go.

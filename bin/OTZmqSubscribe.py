@@ -28,15 +28,15 @@ lKnownTypes = ['tick', 'cmd', 'retval', 'bar', 'timer']
 
 sUsage = __doc__.strip()
 oParser = OptionParser(usage=sUsage)
-# I doubt the idea of subscribing at the same time works as we block on the
-# publishing. We need to refactor with threads.
-oParser.add_option("-s", "--subport", action="store", dest="sSubPort", type="string",
+# We need to refactor with threads?
+oParser.add_option("-s", "--subport", action="store",
+                   dest="sSubPubPort", type="string",
                    default="2027",
                    help="the TCP port number to subscribe to (default 2027)")
-# if sPubPort is > 0 then publish a Zmq version query
-oParser.add_option("-p", "--pubport", action="store", dest="sPubPort", type="string",
-                   default="0",
-                   help="the TCP port number to publish to (default 0)")
+# if sReqRepPort is > 0 then publish a Zmq version query
+oParser.add_option("-r", "--reqport", action="store", dest="sReqRepPort", type="string",
+                   default="2028",
+                   help="the TCP port number to publish to (default 2028)")
 oParser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
                    default="127.0.0.1",
                    help="the TCP address to subscribe on (default 127.0.0.1)")
@@ -74,8 +74,8 @@ def iMain():
         for sElt in lArgs:
             assert sElt in lKnownTypes
 
-    sSubPort = lOptions.sSubPort
-    assert 0 < int(sSubPort) < 66000
+    sSubPubPort = lOptions.sSubPubPort
+    assert 0 < int(sSubPubPort) < 66000
     
     sIpAddress = lOptions.sIpAddress
     assert sIpAddress
@@ -86,29 +86,17 @@ def iMain():
         oContext.linger = 0
         oSubSocket = oContext.socket(zmq.SUB)
         if lOptions.iVerbose >= 1:
-            print("INFO: Connecting to: " + sIpAddress + ":" + sSubPort + \
+            print("INFO: Connecting to: " + sIpAddress + ":" + sSubPubPort + \
                   " and subscribing to: " + " ".join(lArgs))
-        oSubSocket.connect("tcp://"+sIpAddress+":"+sSubPort)
+        oSubSocket.connect("tcp://"+sIpAddress+":"+sSubPubPort)
 
         if not lArgs:
             lArgs = ['']
         for sElt in lArgs:
             oSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
-        sPubPort = lOptions.sPubPort
-        if 0 < int(sPubPort) < 66000:
-            oPubSocket = oContext.socket(zmq.PUB)
-
-            if lOptions.iVerbose >= 1:
-                print "Publishing to: " + sIpAddress + ":" + sPubPort
-            oPubSocket.connect("tcp://"+sIpAddress+":"+sPubPort)
-
-            sRequest = b"cmd|ZmqVersion"
-            if lOptions.iVerbose >= 1:
-                print("Sending request %s ..." % sRequest)
-            oPubSocket.send(sRequest)
-        else:
-            oPubSocket = None
+        sReqRepPort = lOptions.sReqRepPort
+        oPubSocket = None
 
         bBlock = False
         sTopic = ''
