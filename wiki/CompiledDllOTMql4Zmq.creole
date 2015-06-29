@@ -17,6 +17,6 @@ see [[TestExpert]].
 
 === Compiled DLL Changes
 
-The libraries checked in to the {{{src/}}} directory is from:
+The libraries checked in to the {{{src/}}} directory are from:
 https://github.com/OpenTrading/mql4zmq/
 and any changes and issues will be tracked there.

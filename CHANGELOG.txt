@@ -1,3 +1,8 @@
+commit 8468d0e9b2b0c4191875780cf361bb2decee5ac3
+Date:   Mon Jun 29 22:51:45 2015 +0300
+
+    Fixed Compiled Dll and rolled back to ZeroMQ v2.2.0
+
 commit 12d26790d3403a2d3993e44184d9ea1bd581ef03
 Date:   Thu Jun 25 08:47:12 2015 +0300
 

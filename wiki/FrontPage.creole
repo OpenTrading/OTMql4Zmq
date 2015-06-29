@@ -71,9 +71,14 @@ the folder MQL4 over the MQL4 folder of your Metatrader installation. It will
 not overwrite any system files, and keeps its files in subdirectories
 called {{{OTMql4}}}.
 
+For the Compiled DLL, see
+[[Installation|https://github.com/OpenTrading/OTMql4Zmq/wiki/Installation]].
+
 See [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]]
-for instructions for installing into your Python; you wil need this either
-to run th
+for instructions for installing {{{pyzmq}} into your Python. You will need
+to run the Python {{{OTZmqCmdEA.mq4}}}, or to run the
+[[Scripts|https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts]].
+in the {{{bin}}} directory.
 
 === Project
 

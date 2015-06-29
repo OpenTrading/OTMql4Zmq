@@ -9,6 +9,8 @@ will always mirror that project, but that project is always master.
 
 In addition to being a convenience, checking them in here makes it
 absolutely certain which DLLs we are testing against.
+The {{{mql4zmq.dll}}} here is from {{{mql4zmq-2.2.0-v100.dll}}} there.
+The {{{libzmq.dll}}} here is from {{{libzmq-v100-mt-2_2_0.dll}}} there.
 
 Note that in the process, we have rolled back to ZeroMQ v2.2.0.
 
