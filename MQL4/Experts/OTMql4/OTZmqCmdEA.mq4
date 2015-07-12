@@ -237,6 +237,8 @@ void OnTimer() {
 	bRetval = bZmqSend(iSPEAKER, uMess);
 	if (bRetval == false) {
 	    vWarn("OnTimer: failed bZmqSend");
+	} else {
+	    vTrace("OnTimer: bZmqSend sent " +uMess);
 	}
     }
     

@@ -53,7 +53,7 @@ class MqlError(RuntimeError):
 
 
 dPENDING=dict()
-def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, oOptions):
+def sPushToPending(sMark, sRequest, oSenderReqRepSocket, sType, oOptions):
     """
     We push our requests onto a queue because some of them will be
     answered immediately (exec) and some of them will have the answer
@@ -66,18 +66,18 @@ def sPushToPending(sMark, sRequest, oSenderPubSocket, sType, oOptions):
     #
     sRequest = sType +"|" +oOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
     # , zmq.NOBLOCK
-    oSenderPubSocket.send(sRequest)
+    oSenderReqRepSocket.send(sRequest)
     i = 1
     if oOptions and oOptions.iVerbose >= 1:
         iLen = len(sRequest)
         vDebug("%d Sent request of length %d: %s" % (i, iLen, sRequest))
     return ""
 
-def bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOptions):
-    oReceiverSubSocket.setsockopt(zmq.LINGER, 0)
-    oReceiverSubSocket.close()
-    oSenderPubSocket.setsockopt(zmq.LINGER, 0)
-    oSenderPubSocket.close()
+def bCloseContextSockets(oContext, oReceiverSubPubSocket, oSenderReqRepSocket, oOptions):
+    oReceiverSubPubSocket.setsockopt(zmq.LINGER, 0)
+    oReceiverSubPubSocket.close()
+    oSenderReqRepSocket.setsockopt(zmq.LINGER, 0)
+    oSenderReqRepSocket.close()
     if oOptions and oOptions.iVerbose >= 1:
         vDebug("destroying the context")
     sys.stdout.flush()
@@ -86,21 +86,21 @@ def bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOption
 
 def lCreateContextSockets(oOptions):
     oContext = zmq.Context()
-    oReceiverSubSocket = oContext.socket(zmq.SUB)
+    oReceiverSubPubSocket = oContext.socket(zmq.SUB)
     s = oOptions.sIpAddress+":"+str(oOptions.iSubPubPort)
     if oOptions.iVerbose >= 1:
-        vInfo("Subscribing to: " + s)
-    oReceiverSubSocket.connect("tcp://"+s)
+        vInfo("Subscribing to: " + s +" with topics " +repr(oOptions.lTopics))
+    oReceiverSubPubSocket.connect("tcp://"+s)
 
     for sElt in oOptions.lTopics:
-        oReceiverSubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
+        oReceiverSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
 
     s = oOptions.sIpAddress + ":" + str(oOptions.iReqRepPort)
-    oSenderPubSocket = oContext.socket(zmq.REQ)
+    oSenderReqRepSocket = oContext.socket(zmq.REQ)
     if oOptions.iVerbose >= 1:
         vInfo("Requesting to:  " + s)
-    oSenderPubSocket.connect("tcp://" + s)
-    return (oContext, oReceiverSubSocket, oSenderPubSocket,)
+    oSenderReqRepSocket.connect("tcp://" + s)
+    return (oContext, oReceiverSubPubSocket, oSenderReqRepSocket,)
 
 def sDefaultExecType(sRequest):
     if sRequest.startswith("Account") or \
@@ -149,7 +149,8 @@ def gRetvalToPython(sString, lElts):
 def oOptionParser():
     sUsage = __doc__.strip()
     parser = OptionParser(usage=sUsage)
-    parser.add_option("-s", "--subport", action="store", dest="iSubPubPort", type="int",
+    parser.add_option("-s", "--subport", action="store",
+                      dest="iSubPubPort", type="int",
                       default=2027,
                       help="the TCP port number to subscribe to")
     parser.add_option("-r", "--reqport", action="store", dest="iReqRepPort", type="int",
@@ -198,7 +199,7 @@ def iMain():
     
     oContext = None
     try:
-        (oContext, oReceiverSubSocket, oSenderPubSocket,) = lCreateContextSockets(oOptions)
+        (oContext, oReceiverSubPubSocket, oSenderReqRepSocket,) = lCreateContextSockets(oOptions)
 
         i = 0
         while True:
@@ -220,7 +221,7 @@ def iMain():
             sType = "exec"
 
             sMarkIn = sMakeMark()
-            sRetval = sPushToPending(sMarkIn, sRequest, oSenderPubSocket, sType, oOptions)
+            sRetval = sPushToPending(sMarkIn, sRequest, oSenderReqRepSocket, sType, oOptions)
             iSec = 0
             # really need to fire this of in a thread
             # and block waiting for it to appear on
@@ -234,14 +235,22 @@ def iMain():
                 if sType == "cmd":
                     # sent as a ReqRep but comes back on SubPub
                     try:
-                        sString = oReceiverSubSocket.recv(zmq.NOBLOCK)
+                        sString = oReceiverSubPubSocket.recv(zmq.NOBLOCK)
                     except zmq.error.Again:
                         continue
                     if not sString: continue
                 else:
-                    # sent as a ReqRep and comes back on comes back on ReqRep
-                    # I think this is blocking
-                    sString = oSenderPubSocket.recv()
+                    sString = ""
+                    # sent as a ReqRep but messages come on SubPub anyway
+                    try:
+                        sString = oSenderReqRepSocket.recv(zmq.NOBLOCK)
+                    except zmq.error.Again:
+                        try:
+                            sString = oReceiverSubPubSocket.recv(zmq.NOBLOCK)
+                        except zmq.error.Again:
+                            continue
+                        # sent as a ReqRep and comes back on comes back on ReqRep
+                        # I think this is blocking
                 if not sString: continue
                 
                 lElts = sString.split('|')
@@ -261,7 +270,7 @@ def iMain():
                     print "INFO: ", sType, sMarkOut, sString
                     if sType == "cmd":
                         # there's still a null that comes back on ReqRep
-                        sNull = oSenderPubSocket.recv()
+                        sNull = oSenderReqRepSocket.recv()
                         # zmq.error.ZMQError
                         
                     try:
@@ -282,7 +291,7 @@ def iMain():
 
     finally:
        if oContext:
-           bCloseContextSockets(oContext, oReceiverSubSocket, oSenderPubSocket, oOptions)
+           bCloseContextSockets(oContext, oReceiverSubPubSocket, oSenderReqRepSocket, oOptions)
 
     return(0)
 

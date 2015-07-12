@@ -95,13 +95,18 @@ int OnInit() {
             vPanic(uRetval);
             return(-3);
         }
-        Comment(uCHART_ID);
-
         iCONTEXT = iPyEvalInt("id(ZmqChart.oCONTEXT)");
+        if (iCONTEXT <= 0) {
+            uRetval = "ERROR: ZmqChart.oCONTEXT failed: "  +iCONTEXT;
+            vPanic(uRetval);
+            return(-3);
+        }
+
         GlobalVariableTemp("fPyZmqContext");
         GlobalVariableSet("fPyZmqContext", iCONTEXT);
 
         fPY_ZMQ_CONTEXT_USERS = 1.0;
+        Comment(uCHART_ID);
 
     }
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
