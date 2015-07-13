@@ -88,8 +88,9 @@ string zOTZmqProcessCmd(string uMess) {
     if (uKey == "Zmq") {
         uRetval = uProcessCmdZmq(uCmd, uChartId, uIgnore, uArg1, uArg2, uArg3, uArg4, uArg5);
     } else {
-        uMsg="Unrecognized action: " + uMess; vWarn(uMsg);
-        uRetval="error|"+uMsg;
+        uMsg="Unrecognized action: ";
+	vWarn(uMsg + uMess);
+        uRetval="error|" +uMsg;
     }
 
     // WE INCLUDE THE SMARK

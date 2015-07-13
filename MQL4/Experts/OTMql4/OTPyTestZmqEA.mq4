@@ -146,15 +146,15 @@ string ePyZmqPopQueue(string uChartId) {
             // but we will do than in Python
 	    // WE INCLUDED THE SMARK
             uOutgoing  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uOutgoing);
+            vDebug("ePyZmqPopQueue: eSendOnSpeaker sending: " +uOutgoing);
             eSendOnSpeaker(uChartId, "retval", uOutgoing, uIncoming);
             eReturnOnListener(uChartId, "retval", "null", uIncoming);
-            vDebug("ePyZmqPopQueue: eSendOnSpeaker " +uOutgoing);
         } else {
             // if the command is exec| - return as a REP on the listener
 	    // WE INCLUDED THE SMARK
             uOutgoing  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uOutgoing);
+            vDebug("ePyZmqPopQueue: eReturnOnListener returning " +uOutgoing);
             eReturnOnListener(uChartId, "retval", uOutgoing, uIncoming);
-            vDebug("ePyZmqPopQueue: eReturnOnListener " +uOutgoing);
         }
     }
     return("");
