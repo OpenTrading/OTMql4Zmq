@@ -11,7 +11,7 @@ OT_LOG_DEBUG=3
 OT_LOG_TRACE=4
 
 def vLog(iLevel, *lMess):
-    print lMess
+    print ' '.join(lMess)
 
 def vError(*gMess):
   vLog(OT_LOG_ERROR, "ERROR: ", *gMess)

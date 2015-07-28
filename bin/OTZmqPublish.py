@@ -42,6 +42,7 @@ from optparse import OptionParser
 
 import zmq
 
+from ZmqListener import ZmqMixin
 from OTLibLog import *
 
 # should do something better if there are multiple clients
@@ -53,7 +54,7 @@ class MqlError(RuntimeError):
 
 
 dPENDING=dict()
-def sPushToPending(sMark, sRequest, oSenderReqRepSocket, sType, oOptions):
+def sPushToPending(sMark, sRequest, oReqRepSocket, sType, oOptions):
     """
     We push our requests onto a queue because some of them will be
     answered immediately (exec) and some of them will have the answer
@@ -66,41 +67,12 @@ def sPushToPending(sMark, sRequest, oSenderReqRepSocket, sType, oOptions):
     #
     sRequest = sType +"|" +oOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
     # , zmq.NOBLOCK
-    oSenderReqRepSocket.send(sRequest)
+    oReqRepSocket.send(sRequest)
     i = 1
-    if oOptions and oOptions.iVerbose >= 1:
+    if oOptions and oOptions.iDebugLevel >= 1:
         iLen = len(sRequest)
         vDebug("%d Sent request of length %d: %s" % (i, iLen, sRequest))
     return ""
-
-def bCloseContextSockets(oContext, oReceiverSubPubSocket, oSenderReqRepSocket, oOptions):
-    oReceiverSubPubSocket.setsockopt(zmq.LINGER, 0)
-    oReceiverSubPubSocket.close()
-    oSenderReqRepSocket.setsockopt(zmq.LINGER, 0)
-    oSenderReqRepSocket.close()
-    if oOptions and oOptions.iVerbose >= 1:
-        vDebug("destroying the context")
-    sys.stdout.flush()
-    oContext.destroy()
-    return True
-
-def lCreateContextSockets(oOptions):
-    oContext = zmq.Context()
-    oReceiverSubPubSocket = oContext.socket(zmq.SUB)
-    s = oOptions.sIpAddress+":"+str(oOptions.iSubPubPort)
-    if oOptions.iVerbose >= 1:
-        vInfo("Subscribing to: " + s +" with topics " +repr(oOptions.lTopics))
-    oReceiverSubPubSocket.connect("tcp://"+s)
-
-    for sElt in oOptions.lTopics:
-        oReceiverSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
-
-    s = oOptions.sIpAddress + ":" + str(oOptions.iReqRepPort)
-    oSenderReqRepSocket = oContext.socket(zmq.REQ)
-    if oOptions.iVerbose >= 1:
-        vInfo("Requesting to:  " + s)
-    oSenderReqRepSocket.connect("tcp://" + s)
-    return (oContext, oReceiverSubPubSocket, oSenderReqRepSocket,)
 
 def sDefaultExecType(sRequest):
     if sRequest.startswith("Account") or \
@@ -147,8 +119,7 @@ def gRetvalToPython(sString, lElts):
     return gRetval
 
 def oOptionParser():
-    sUsage = __doc__.strip()
-    parser = OptionParser(usage=sUsage)
+    parser = OptionParser(usage=__doc__.strip())
     parser.add_option("-s", "--subport", action="store",
                       dest="iSubPubPort", type="int",
                       default=2027,
@@ -156,7 +127,7 @@ def oOptionParser():
     parser.add_option("-r", "--reqport", action="store", dest="iReqRepPort", type="int",
                       default=2028,
                       help="the TCP port number to request to")
-    parser.add_option("-a", "--address", action="store", dest="sIpAddress", type="string",
+    parser.add_option("-a", "--address", action="store", dest="sHostaddress", type="string",
                       default="127.0.0.1",
                       help="the TCP address to subscribe on")
     parser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
@@ -169,7 +140,7 @@ def oOptionParser():
                       default="exec",
                       # FixMe:
                       help="exectype: one of cmd or exec or default (only exec works for now)")
-    parser.add_option("-v", "--verbose", action="store", dest="iVerbose", type="int",
+    parser.add_option("-v", "--verbose", action="store", dest="iDebugLevel", type="int",
                       default=2,
                       help="the verbosity, 0 for silent, up to 4 (1)")
     return parser
@@ -181,9 +152,9 @@ def lGetOptionsArgs():
     assert int(oOptions.iSubPubPort) > 0 and int(oOptions.iSubPubPort) < 66000
     # if iReqRepPort is > 0 then request a Zmq version query
     assert int(oOptions.iReqRepPort) >= 0 and int(oOptions.iReqRepPort) < 66000
-    oOptions.iVerbose = int(oOptions.iVerbose)
-    assert 0 <= oOptions.iVerbose <= 5
-    assert oOptions.sIpAddress
+    oOptions.iDebugLevel = int(oOptions.iDebugLevel)
+    assert 0 <= oOptions.iDebugLevel <= 5
+    assert oOptions.sHostaddress
 
     return (oOptions, lArgs,)
 
@@ -195,11 +166,13 @@ def iMain():
     if not lArgs:
         # subscribe to everything
         lArgs = ['']
-    oOptions.lTopics = lArgs
+    lTopics = lArgs
     
-    oContext = None
+    oMixin = None
     try:
-        (oContext, oReceiverSubPubSocket, oSenderReqRepSocket,) = lCreateContextSockets(oOptions)
+        # sChartId is in oOptions
+        oMixin = ZmqMixin(**oOptions.__dict__)
+        (oSubPubSocket, oReqRepSocket,) = oMixin.lCreateConnectSockets(lTopics)
 
         i = 0
         while True:
@@ -221,7 +194,7 @@ def iMain():
             sType = "exec"
 
             sMarkIn = sMakeMark()
-            sRetval = sPushToPending(sMarkIn, sRequest, oSenderReqRepSocket, sType, oOptions)
+            sRetval = sPushToPending(sMarkIn, sRequest, oReqRepSocket, sType, oOptions)
             iSec = 0
             # really need to fire this of in a thread
             # and block waiting for it to appear on
@@ -235,7 +208,7 @@ def iMain():
                 if sType == "cmd":
                     # sent as a ReqRep but comes back on SubPub
                     try:
-                        sString = oReceiverSubPubSocket.recv(zmq.NOBLOCK)
+                        sString = oSubPubSocket.recv(zmq.NOBLOCK)
                     except zmq.error.Again:
                         continue
                     if not sString: continue
@@ -243,10 +216,10 @@ def iMain():
                     sString = ""
                     # sent as a ReqRep but messages come on SubPub anyway
                     try:
-                        sString = oSenderReqRepSocket.recv(zmq.NOBLOCK)
+                        sString = oReqRepSocket.recv(zmq.NOBLOCK)
                     except zmq.error.Again:
                         try:
-                            sString = oReceiverSubPubSocket.recv(zmq.NOBLOCK)
+                            sString = oSubPubSocket.recv(zmq.NOBLOCK)
                         except zmq.error.Again:
                             continue
                         # sent as a ReqRep and comes back on comes back on ReqRep
@@ -270,7 +243,7 @@ def iMain():
                     print "INFO: ", sType, sMarkOut, sString
                     if sType == "cmd":
                         # there's still a null that comes back on ReqRep
-                        sNull = oSenderReqRepSocket.recv()
+                        sNull = oReqRepSocket.recv()
                         # zmq.error.ZMQError
                         
                     try:
@@ -286,14 +259,20 @@ def iMain():
                 if len(dPENDING.keys()) == 0: break
 
     except KeyboardInterrupt:
-       if oOptions and oOptions.iVerbose >= 1:
+       if oOptions and oOptions.iDebugLevel >= 1:
            vInfo("exiting")
 
-    finally:
-       if oContext:
-           bCloseContextSockets(oContext, oReceiverSubPubSocket, oSenderReqRepSocket, oOptions)
+    except Exception, e:
+        vError(str(e) +"\n" + \
+               traceback.format_exc(10) +"\n")
+        sys.stdout.flush()
+        sys.exc_clear()
 
-    return(0)
+    finally:
+       if oMixin:
+           oMixin.bCloseContextSockets()
+
+    return 0
 
 
 if __name__ == '__main__':

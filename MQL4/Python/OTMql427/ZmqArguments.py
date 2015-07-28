@@ -18,20 +18,22 @@ def oParseOptions(sUsage):
     """
     oArgParser = ArgumentParser(description=sUsage)
     oArgParser.add_argument("-a", "--address", action="store",
-                            dest="sIpAddress",
+                            dest="sHostAddress",
                             default="127.0.0.1",
                             help="the TCP address to subscribe on (default 127.0.0.1)")
     oArgParser.add_argument("-s", "--subport", action="store",
-                            dest="sSubPubPort",
-                            default="2027",
+                            type=int,
+                            dest="iSubPubPort",
+                            default=2027,
                             help="the TCP port number to subscribe to (default 2027)")
     oArgParser.add_argument("-r", "--reqport", action="store",
-                            dest="sReqRepPort",
-                            default="2028",
+                            type=int,
+                            dest="iReqRepPort",
+                            default=2028,
                             help="the TCP port number to request to (default 2028)")
     oArgParser.add_argument("-v", "--verbose", action="store",
-                            dest="iVerbose",
+                            dest="iDebugLevel",
                             type=int,
                             default=1,
                             help="the verbosity, 0 for silent 4 max (default 1)")
-    return(oArgParser)
+    return oArgParser

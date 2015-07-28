@@ -83,9 +83,9 @@ int OnInit() {
         }
         vPyExecuteUnicode("from OTMql427 import ZmqChart");
         vPyExecuteUnicode(uCHART_ID+"=ZmqChart.ZmqChart('" +uCHART_ID +"', " +
-                          "iReqRepPort=" + iSUBPUB_PORT + ", " +
-                          "iSubPubPort=" + iREPREQ_PORT + ", " +
-                          "sIpAddress='" + uBIND_ADDRESS + "', " +
+                          "iSubPubPort=" + iSUBPUB_PORT + ", " +
+                          "iReqRepPort=" + iREPREQ_PORT + ", " +
+                          "sHostAddress='" + uBIND_ADDRESS + "', " +
                           "iDebugLevel=" + MathRound(fDebugLevel) + ", " +
                           ")");
         vPyExecuteUnicode("sFoobar = '%s : %s' % (sys.last_type, sys.last_value,)");
@@ -112,8 +112,16 @@ int OnInit() {
     GlobalVariableSet("fPyZmqContextUsers", fPY_ZMQ_CONTEXT_USERS);
     vInfo("OnInit: Incremented fZmqContextUsers to "+ MathRound(fPY_ZMQ_CONTEXT_USERS) + " with iCONTEXT: " + iCONTEXT);
 
+    vPyExecuteUnicode("import zmq");
+    uRetval = uPySafeEval("zmq.zmq_version()");
+    if (StringFind(uRetval, "ERROR:", 0) >= 0) {
+	uRetval = "ERROR: zmq.zmq_version failed: "  + uRetval;
+	vPanic(uRetval);
+	return(-3);
+    }
+    vDebug("OnInit: zmq_version=" +uRetval);
+    
     EventSetTimer(iTIMER_INTERVAL_SEC);
-    vDebug("OnInit: fPyZmqContextUsers=" + fPY_ZMQ_CONTEXT_USERS);
 
     return (0);
 }

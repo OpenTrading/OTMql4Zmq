@@ -15,7 +15,7 @@ and
 extern int iSUBPUB_PORT=2027;
 extern int iREPREQ_PORT=2028;
 // can replace this with the IP address of an interface - not lo
-extern string sBindAddress="127.0.0.1";
+extern string sHOST_ADDRESS="127.0.0.1";
 
 #include <OTMql4/OTLibLog.mqh>
 #include <OTMql4/OTLibStrings.mqh>
@@ -115,12 +115,12 @@ int OnInit() {
             vPanic("OnInit: failed allocating the speaker " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        if (zmq_bind(iSPEAKER,"tcp://"+sBindAddress+":"+iSUBPUB_PORT) == -1) {
+        if (zmq_bind(iSPEAKER,"tcp://"+sHOST_ADDRESS+":"+iSUBPUB_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the speaker on "+sBindAddress+":"+iSUBPUB_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
+            vPanic("OnInit: failed binding the speaker on "+sHOST_ADDRESS+":"+iSUBPUB_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        vInfo("bound the speaker on "+sBindAddress+":"+iSUBPUB_PORT);
+        vInfo("bound the speaker on "+sHOST_ADDRESS+":"+iSUBPUB_PORT);
 
 	uTopic = "";
         iLISTENER = zmq_socket(iCONTEXT, ZMQ_REP);
@@ -129,22 +129,22 @@ int OnInit() {
             vPanic("OnInit: failed allocating the listener " + ": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-	// sBindAddress = "*";
-        if (zmq_bind(iLISTENER,"tcp://"+sBindAddress+":"+iREPREQ_PORT) == -1) {
+	// sHOST_ADDRESS = "*";
+        if (zmq_bind(iLISTENER,"tcp://"+sHOST_ADDRESS+":"+iREPREQ_PORT) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
-            vPanic("OnInit: failed binding the listener on "+sBindAddress+":"+iREPREQ_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
+            vPanic("OnInit: failed binding the listener on "+sHOST_ADDRESS+":"+iREPREQ_PORT +": , iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-        vInfo("OnInit: bound the listener on "+sBindAddress+":"+iREPREQ_PORT);
+        vInfo("OnInit: bound the listener on "+sHOST_ADDRESS+":"+iREPREQ_PORT);
 
 	// old unused code for sub instead of rep
-	if (uTopic != "") {
+	/*
 	if (zmq_setsockopt(iLISTENER, ZMQ_SUBSCRIBE, uTopic) == -1) {
             iErr=mql4zmq_errno(); uErr=zmq_strerror(iErr);
             vPanic("OnInit: failed subscribing the listener to topic: "+uTopic+", iErr "+IntegerToString(iErr)+" "+uErr);
             return(-1);
         }
-	}
+	*/
         GlobalVariableSet("fZmqSpeaker", iSPEAKER);
         GlobalVariableSet("fZmqListener", iLISTENER);
         GlobalVariableSet("fZmqContext", iCONTEXT);

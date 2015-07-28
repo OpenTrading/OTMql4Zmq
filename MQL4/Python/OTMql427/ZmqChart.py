@@ -45,11 +45,12 @@ class ZmqChart(Mq4Chart, ZmqMixin):
         sys.stdout.flush()
         try:
             sBody = self.sRecvOnListener()
-        except Exception , e:
-            print "Error eHeartBeat on the listener "+str(e)
+        except Exception as e:
+            print "Error eHeartBeat on the listener " +str(e)
             print traceback.format_exc()
             sys.stdout.flush()
             raise
+        
         if sBody:
             print "pushing eHeartBeat on the queue " + sBody
             self.eMq4PushQueue(sBody)
