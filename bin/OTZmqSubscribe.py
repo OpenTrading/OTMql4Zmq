@@ -14,7 +14,7 @@ those topics.
 
 MAYBE: do NOT run this until the expert has been loaded onto a chart.
 It may (but shouldn't) prevent the expert from binding to the ports.
-Also be sure to not keave it running between restarting Metatrader.
+Also be sure to not leave it running between restarting Metatrader.
 
 """
 import sys
@@ -24,7 +24,7 @@ import time
 
 import zmq
 
-from ZmqListener import ZmqMixin
+from ZmqBinListener import ZmqMixin
 
 lKnownTypes = ['tick', 'cmd', 'retval', 'bar', 'timer']
 
@@ -59,10 +59,12 @@ def iMain():
     (oOptions, lArgs) = oParser.parse_args()
 
     if not lArgs:
-         lArgs.append("")
+        # subscribe to everything
+        lArgs = ['']
     elif lKnownTypes:
         for sElt in lArgs:
             assert sElt in lKnownTypes
+    lTopics = lArgs
 
     sSubPubPort = oOptions.sSubPubPort
     assert 0 < int(sSubPubPort) < 66000
@@ -75,62 +77,44 @@ def iMain():
         oMixin = ZmqMixin(**oOptions.__dict__)
         #print("INFO: setting linger to 0")
         oMixin.oContext.linger = 0
-        oSubPubSocket = oMixin.oContext.socket(zmq.SUB)
-        if oOptions.iDebugLevel >= 1:
-            print("INFO: Connecting to: " + sHostaddress + ":" + sSubPubPort + \
-                  " and subscribing to: " + " ".join(lArgs))
-        oSubPubSocket.connect("tcp://"+sHostaddress+":"+sSubPubPort)
-
-        if not lArgs:
-            lArgs = ['']
-        for sElt in lArgs:
-            oSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
+        oMixin.eConnectToSubPub(lTopics)
 
         sReqRepPort = oOptions.sReqRepPort
         oReqRepSocket = None
 
-        bBlock = False
         sTopic = ''
         while True:
-            if bBlock:
-                # zmq.NOBLOCK raises zmq.error.Again:
-                # Resource temporarily unavailable
-                try:
-                    # was sTopic, sString = oSubPubSocket.recv_multipart(flags=zmq.NOBLOCK)
-                    sString = oSubPubSocket.recv(flags=zmq.NOBLOCK)
-                except zmq.error.Again:
-                    time.sleep(0.1)
-                    continue
-            else:
-                lRetval = [None, None]
-                sString = oSubPubSocket.recv()
-                sTopic = ""
-                try:
-                    lElts = sString.split('|')
-                    if len(lElts) < 6:
-                        print "WARN: somethings a little wrong: expected len>=6 " + \
-                              repr(lElts)
-                    sCmd = lElts[0]
-                    # the first part of the message is the topic
+            # was: sString = oMixin.oSubPubSocket.recv()
+            sString = oMixin.sRecvOnSubPub()
+            if not sString: continue
+            sTopic = ""
+            try:
+                lElts = sString.split('|')
+                if len(lElts) < 6:
+                    print "WARN: somethings a little wrong: expected len>=6 " + \
+                          repr(lElts)
+                sCmd = lElts[0]
+                # the first part of the message is the topic
+                if sCmd not in lKnownTypes:
+                    print "WARN: unrecognized beginning of message: " + \
+                          repr(map(ord, sCmd))
+                    # should check for bytes < 32 or > 128
+                    for sElt in lKnownTypes:
+                        if sCmd.endswith(sElt):
+                            sCmd = sElt
+                            break
                     if sCmd not in lKnownTypes:
-                        print "WARN: unrecognized beginning of message: " + \
-                              repr(map(ord, sCmd))
-                        # should check for bytes < 32 or > 128
-                        for sElt in lKnownTypes:
-                            if sCmd.endswith(sElt):
-                                sCmd = sElt
-                                break
-                        if sCmd not in lKnownTypes:
-                            continue
-                        if sTopic == "":
-                            sTopic = sCmd
-                except Exception, e:
-                    print "ERROR: exception in recv: " +str(e)
+                        continue
+                    if sTopic == "":
+                        sTopic = sCmd
+            except Exception as e:
+                print "ERROR: exception in recv: " +str(e)
                         
             # if not sString: continue
             print "INFO: %s at %15.5f" % (sString , time.time())
             sTopic = ''
             # print map(ord, sString[:18])
+            
     except KeyboardInterrupt:
         pass
     finally:

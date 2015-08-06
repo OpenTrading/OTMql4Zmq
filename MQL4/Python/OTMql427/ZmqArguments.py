@@ -7,7 +7,6 @@ arguments parsing can be uniform between applications that use it.
 """
 
 from argparse import ArgumentParser
-from optparse import OptionParser
 
 def oParseOptions(sUsage):
     """

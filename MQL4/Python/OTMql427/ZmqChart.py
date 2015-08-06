@@ -10,7 +10,6 @@ the whole application, so it is set as the module variable oCONTEXT.
 import sys, logging
 import time
 import traceback
-import zmq
 
 oLOG = logging
 

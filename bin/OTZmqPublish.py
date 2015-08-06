@@ -38,41 +38,18 @@ import sys
 import os
 import json
 import time
+import traceback
 from optparse import OptionParser
 
 import zmq
 
-from ZmqListener import ZmqMixin
-from OTLibLog import *
+from ZmqBinListener import ZmqMixin, dPENDING
+
+from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
 
 # should do something better if there are multiple clients
 def sMakeMark():
     return "%15.5f" % time.time()
-
-class MqlError(RuntimeError):
-    pass
-
-
-dPENDING=dict()
-def sPushToPending(sMark, sRequest, oReqRepSocket, sType, oOptions):
-    """
-    We push our requests onto a queue because some of them will be
-    answered immediately (exec) and some of them will have the answer
-    come back on a retval topic in the subcription.
-    """
-    global dPENDING
-
-    dPENDING[sMark] = sRequest
-    #
-    #
-    sRequest = sType +"|" +oOptions.sChartId +"|" +"0" +"|" +sMark +"|" +sRequest
-    # , zmq.NOBLOCK
-    oReqRepSocket.send(sRequest)
-    i = 1
-    if oOptions and oOptions.iDebugLevel >= 1:
-        iLen = len(sRequest)
-        vDebug("%d Sent request of length %d: %s" % (i, iLen, sRequest))
-    return ""
 
 def sDefaultExecType(sRequest):
     if sRequest.startswith("Account") or \
@@ -82,41 +59,6 @@ def sDefaultExecType(sRequest):
         sRequest in ["Period","RefreshRates", "Symbol"]:
             return "exec"
     return "cmd"
-
-def gRetvalToPython(sString, lElts):
-    # raises MqlError
-    global dPENDING
-
-    sType = lElts[4]
-    sVal = lElts[5]
-    if sVal == "":
-        return ""
-    if sType == 'string':
-        gRetval = sVal
-    elif sType == 'error':
-        #? should I raise an error?
-        raise MqlError(sVal)
-    elif sType == 'datetime':
-        #? how do I convert this
-        # I think it's epoch seconds as an int
-        # but what TZ? TZ of the server?
-        # I'll treat it as a float like time.time()
-        # but probably better to convert it to datetime
-        gRetval = float(sVal)
-    elif sType == 'int':
-        gRetval = int(sVal)
-    elif sType == 'json':
-        gRetval = json.loads(sVal)
-    elif sType == 'double':
-        gRetval = float(sVal)
-    elif sType == 'none':
-        gRetval = None
-    elif sType == 'void':
-        gRetval = None
-    else:
-        print "WARN: unknown type i=%s in %r" % (sType, lElts,)
-        return None
-    return gRetval
 
 def oOptionParser():
     parser = OptionParser(usage=__doc__.strip())
@@ -159,8 +101,6 @@ def lGetOptionsArgs():
     return (oOptions, lArgs,)
 
 def iMain():
-    global dPENDING
-
     (oOptions, lArgs,) = lGetOptionsArgs()
     
     if not lArgs:
@@ -172,7 +112,8 @@ def iMain():
     try:
         # sChartId is in oOptions
         oMixin = ZmqMixin(**oOptions.__dict__)
-        (oSubPubSocket, oReqRepSocket,) = oMixin.lCreateConnectSockets(lTopics)
+        oMixin.eConnectToSubPub(lTopics)
+        oMixin.eConnectToReqRep()
 
         i = 0
         while True:
@@ -194,9 +135,9 @@ def iMain():
             sType = "exec"
 
             sMarkIn = sMakeMark()
-            sRetval = sPushToPending(sMarkIn, sRequest, oReqRepSocket, sType, oOptions)
+            sRetval = oMixin.sPushToPending(sMarkIn, sRequest, sType, oOptions)
             iSec = 0
-            # really need to fire this of in a thread
+            # really need to fire this off in a thread
             # and block waiting for it to appear on
             # the retval queue
             while len(dPENDING.keys()) > 0 and iSec < oOptions.iTimeout:
@@ -208,53 +149,32 @@ def iMain():
                 if sType == "cmd":
                     # sent as a ReqRep but comes back on SubPub
                     try:
-                        sString = oSubPubSocket.recv(zmq.NOBLOCK)
-                    except zmq.error.Again:
-                        continue
-                    if not sString: continue
+                        sString = oMixin.oSubPubSocket.recv(zmq.NOBLOCK)
+                    except zmq.ZMQError as e:
+                        # iError = zmq.zmq_errno()
+                        iError = e.errno
+                        if iError == zmq.EAGAIN:
+                            time.sleep(1.0)
+                            continue
+                        if not sString: continue
                 else:
                     sString = ""
                     # sent as a ReqRep but messages come on SubPub anyway
                     try:
-                        sString = oReqRepSocket.recv(zmq.NOBLOCK)
+                        sString = oMixin.oReqRepSocket.recv(zmq.NOBLOCK)
                     except zmq.error.Again:
                         try:
-                            sString = oSubPubSocket.recv(zmq.NOBLOCK)
-                        except zmq.error.Again:
-                            continue
+                            sString = oMixin.oSubPubSocket.recv(zmq.NOBLOCK)
+                        except zmq.ZMQError as e:
+                            # iError = zmq.zmq_errno()
+                            iError = e.errno
+                            if iError == zmq.EAGAIN:
+                                time.sleep(1.0)
+                                continue
                         # sent as a ReqRep and comes back on comes back on ReqRep
                         # I think this is blocking
                 if not sString: continue
-                
-                lElts = sString.split('|')
-                if len(lElts) <= 4:
-                    vWarn("not enough | found in: %s" % (sString,))
-                if sString.startswith('tick'):
-                    print sString
-                elif sString.startswith('timer'):
-                    print sString
-                elif sString.startswith('retval'):
-                    sMarkOut = lElts[3]
-                    if sMarkOut not in dPENDING.keys():
-                        print "WARN: %s not found in: %r" % (sMarkOut, dPENDING.keys())
-                    else:
-                        del dPENDING[sMarkOut]
-                    
-                    print "INFO: ", sType, sMarkOut, sString
-                    if sType == "cmd":
-                        # there's still a null that comes back on ReqRep
-                        sNull = oReqRepSocket.recv()
-                        # zmq.error.ZMQError
-                        
-                    try:
-                        gRetval = gRetvalToPython(sString, lElts)
-                    except MqlError, e:
-                        vError(sRequest, e)
-                    else:
-                        print gRetval
-                else:
-                    vWarn("Unrecognized message: " + sString)
-
+                oMixin.vPopFromPending(sString)
                 #? cleanup for timeout
                 if len(dPENDING.keys()) == 0: break
 
@@ -262,7 +182,7 @@ def iMain():
        if oOptions and oOptions.iDebugLevel >= 1:
            vInfo("exiting")
 
-    except Exception, e:
+    except Exception as e:
         vError(str(e) +"\n" + \
                traceback.format_exc(10) +"\n")
         sys.stdout.flush()
