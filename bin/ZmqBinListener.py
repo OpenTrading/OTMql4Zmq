@@ -147,6 +147,8 @@ class ZmqMixin(object):
                         time.sleep(1.0)
                         iSec += 1
                         continue
+                # FixMe: still need to read the null off self.oReqRepSocket?
+                
             else:
                 # sent as a ReqRep - why not block if in a thread?
                 try:

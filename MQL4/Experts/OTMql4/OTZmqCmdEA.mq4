@@ -256,33 +256,30 @@ void vReqRepReply(string uMessage) {
     
     //vTrace("vReqRepReply:: got message: " +uMessage);
 
-    if (StringFind(uMessage, "exec", 0) == 0) {
+    // WE INCLUDED THE SMARK
+    //vTrace("Processing defered cmd message: " + uMessage);
+    uRetval = zOTZmqProcessCmd(uMessage);
+    if (StringLen(uRetval) <= 0) {
+	vWarn("vReqRepReply: Unprocessed message: " + uMessage);
+    } else if (StringFind(uMessage, "exec", 0) == 0) {
         //vTrace("vReqRepReply:: got exec message: " + uMessage);
         // execs are executed immediately and return a result on the wire
         // They're things that take less than a tick to evaluate
         //vTrace("Processing immediate exec message: " + uMessage);
-        uRetval = zOTZmqProcessCmd(uMessage);
-	// WE INCLUDED THE SMARK
 	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
-        vDebug("vReqRepReply:: Sending message back through iLISTENER: " + uMess);
+        vDebug("vReqRepReply: Sending message back through iLISTENER: " + uMess);
         bRetval = bZmqSend(iLISTENER, uMess);
     } else if (StringFind(uMessage, "cmd", 0) == 0) {
 
-        vDebug("Sending NULL message to: " + iLISTENER);
+        vDebug("vReqRepReply: Sending NULL message to: iLISTENER");
         bZmqSend(iLISTENER, "null");
 
-        //vTrace("Processing defered cmd message: " + uMessage);
-        uRetval = zOTZmqProcessCmd(uMessage);
-        if (StringLen(uRetval) > 0) {
-	    // WE INCLUDED THE SMARK
-	    uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
-            vDebug("Publishing message: " + uMess);
-            bRetval = bZmqSend(iSPEAKER, uMess);
-        } else {
-            vWarn("Unprocessed message: " + uMessage);
-        }
+	// WE INCLUDED THE SMARK
+	uMess  = zOTLibSimpleFormatRetval("retval", uCHART_ID, 0, "", uRetval);
+	vDebug("vReqRepReply: Publishing message: " + uMess);
+	bRetval = bZmqSend(iSPEAKER, uMess);
     } else {
-        vError("Internal error, not cmd or exec: " + uMessage);
+        vError("vReqRepReply: Internal error, not cmd or exec: " + uMessage);
     }
 }
 

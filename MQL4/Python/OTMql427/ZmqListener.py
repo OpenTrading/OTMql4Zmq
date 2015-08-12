@@ -17,6 +17,8 @@ import traceback
 import zmq
 
 from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
+from OTMql427.SimpleFormat import lKNOWN_TOPICS
+
 oLOG = logging
 
 class ZmqMixin(object):
@@ -57,6 +59,12 @@ class ZmqMixin(object):
             time.sleep(0.1)
             self.oSubPubSocket = oSubPubSocket
 
+    def eConnectToSub(self, lTopics):
+        return self.eConnectToSubPub(lTopics, iDir=zmq.SUB)
+
+    def eConnectToPub(self, lTopics):
+        return self.eConnectToSubPub(lTopics, iDir=zmq.PUB)
+    
     def eConnectToSubPub(self, lTopics, iDir=zmq.SUB):
         """
         We bind on this Metatrader end, and connect from the scripts.
@@ -64,19 +72,20 @@ class ZmqMixin(object):
         """
 
         if self.oSubPubSocket is None:
-            assert iDir in [zmq.PUB, zmq.SUB]
+            assert iDir in [zmq.PUB, zmq.SUB], \
+                   "iDir not in [zmq.PUB, zmq.SUB]: " +str(iDir)
             oSubPubSocket = self.oContext.socket(iDir)
-            s = self.sHostaddress +":"+str(self.iSubPubPort)
-            oSubPubSocket.connect("tcp://"+s)
+            sUrl = "tcp://" +self.sHostAddress +":" +str(self.iSubPubPort)
+            oSubPubSocket.connect(sUrl)
             self.oSubPubSocket = oSubPubSocket
             if iDir == zmq.SUB:
                 if self.iDebugLevel >= 1:
-                    vInfo("Subscribing to: " + s +" with topics " +repr(lTopics))
+                    vInfo("Subscribing to: " + sUrl +" with topics " +repr(lTopics))
                 for sElt in lTopics:
                     self.oSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
             else:
                 if self.iDebugLevel >= 1:
-                    vInfo("Publishing to: " + s)
+                    vInfo("Publishing to: " + sUrl)
 
         return ""
 
@@ -91,7 +100,8 @@ class ZmqMixin(object):
         We bind on our Metatrader end, and connect from the scripts.
         """
         if self.oReqRepSocket is None:
-            assert iDir in [zmq.REP, zmq.REQ]
+            assert iDir in [zmq.REP, zmq.REQ], \
+                   "iDir not in [zmq.REP, zmq.REQ]: " +str(iDir)
             oReqRepSocket = self.oContext.socket(iDir)
             assert oReqRepSocket, "eConnectToReqRep: oReqRepSocket is null"
             assert self.iReqRepPort, "eConnectToReqRep: iReqRepPort is null"
@@ -171,7 +181,12 @@ class ZmqMixin(object):
         return ""
 
     def eSendOnReqRep(self, sTopic, sMsg):
-        assert sMsg.startswith(sTopic)
+        assert sMsg.startswith(sTopic), \
+               "eSendOnReqRep: sMsg.startswith(sTopic) failed" + sMsg +" " +sTopic
+        if sTopic not in lKNOWN_TOPICS:
+            sRetval = "eSendOnSpeaker: eSendOnReqRep unhandled topic: " +sTopics +" " +sMess
+            vError(sRetval)
+            return sRetval
         assert self.oReqRepSocket, "eSendOnReqRep: oReqRepSocket is null"
         try:
             sRetval = self.oReqRepSocket.send(sMsg)
@@ -191,13 +206,16 @@ class ZmqMixin(object):
             sys.stdout.flush()
             sRetval = str(e)
         return sRetval
-
-    def sRecvOnReqRep(self):
-        if self.oReqRepSocket is None:
-            self.eBindToRep()
+    
+    def sRecvReply(self, iFlag=zmq.NOBLOCK):
+        # default is iFlag=zmq.NOBLOCK
+        s = self.sRecvOnReqRep(iFlag)
+        return s
+    
+    def sRecvOnReqRep(self, iFlag=zmq.NOBLOCK):
         assert self.oReqRepSocket, "sRecvOnReqRep: oReqRepSocket is null"
         try:
-            sRetval = self.oReqRepSocket.recv(flags=zmq.NOBLOCK)
+            sRetval = self.oReqRepSocket.recv(flags=iFlag)
         except zmq.ZMQError as e:
             # iError = zmq.zmq_errno()
             iError = e.errno

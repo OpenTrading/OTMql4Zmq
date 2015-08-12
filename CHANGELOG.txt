@@ -1,3 +1,8 @@
+commit d17aaaac012757b4bbf179e89c9d7b40fbc29917
+Date:   Wed Aug 12 18:19:09 2015 +0300
+
+    Refactored to put Zmq in OpenTrader - untested
+
 commit 0c4db177879e80538c03ca09c4baf4bca70da77b
 Date:   Thu Aug 6 04:11:20 2015 +0300
 
