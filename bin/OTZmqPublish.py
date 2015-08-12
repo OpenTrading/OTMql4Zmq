@@ -43,8 +43,6 @@ from optparse import OptionParser
 
 import zmq
 
-from ZmqBinListener import ZmqMixin, dPENDING
-
 from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
 
 # should do something better if there are multiple clients
@@ -60,60 +58,78 @@ def sDefaultExecType(sRequest):
             return "exec"
     return "cmd"
 
-def oOptionParser():
-    parser = OptionParser(usage=__doc__.strip())
-    parser.add_option("-s", "--subport", action="store",
+def oOptionParser(sUsage):
+    oParser = OptionParser(usage=sUsage)
+    oParser.add_option("-s", "--subport", action="store",
                       dest="iSubPubPort", type="int",
                       default=2027,
                       help="the TCP port number to subscribe to")
-    parser.add_option("-r", "--reqport", action="store", dest="iReqRepPort", type="int",
+    oParser.add_option("-r", "--reqport", action="store", dest="iReqRepPort", type="int",
                       default=2028,
                       help="the TCP port number to request to")
-    parser.add_option("-a", "--address", action="store", dest="sHostaddress", type="string",
+    oParser.add_option("-a", "--address", action="store", dest="sHostAddress", type="string",
                       default="127.0.0.1",
                       help="the TCP address to subscribe on")
-    parser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
+    oParser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
                       default="ANY",
                       help="the chart ID")
-    parser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
+    oParser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
                       default=60,
                       help="timeout in seconds to wait for a reply (60)")
-    parser.add_option("-e", "--exectype", action="store", dest="sExecType", type="string",
+    oParser.add_option("-e", "--exectype", action="store", dest="sExecType", type="string",
                       default="exec",
                       # FixMe:
                       help="exectype: one of cmd or exec or default (only exec works for now)")
-    parser.add_option("-v", "--verbose", action="store", dest="iDebugLevel", type="int",
+    oParser.add_option('-P', "--mt4dir", action="store",
+                      dest="sMt4Dir", default=r"/t/Program Files/MetaTrader",
+                      help="directory for the installed Metatrader")
+    oParser.add_option("-v", "--verbose", action="store", dest="iDebugLevel", type="int",
                       default=2,
                       help="the verbosity, 0 for silent, up to 4 (1)")
-    return parser
+    return oParser
 
 def lGetOptionsArgs():
-    parser = oOptionParser()
-    (oOptions, lArgs,) = parser.parse_args()
+    oParser = oOptionParser(__doc__.strip())
+    (oOptions, lArgs,) = oParser.parse_args()
 
     assert int(oOptions.iSubPubPort) > 0 and int(oOptions.iSubPubPort) < 66000
     # if iReqRepPort is > 0 then request a Zmq version query
     assert int(oOptions.iReqRepPort) >= 0 and int(oOptions.iReqRepPort) < 66000
     oOptions.iDebugLevel = int(oOptions.iDebugLevel)
     assert 0 <= oOptions.iDebugLevel <= 5
-    assert oOptions.sHostaddress
+    assert oOptions.sHostAddress
+
+    sMt4Dir = oOptions.sMt4Dir
+    if sMt4Dir:
+        sMt4Dir = os.path.expanduser(os.path.expandvars(sMt4Dir))
+        if not os.path.isdir(sMt4Dir):
+            vWarn("sMt4Dir not found: " + sMt4Dir)
+        else:
+            sMt4Dir = os.path.join(sMt4Dir, 'MQL4', 'Python')
+            if not os.path.isdir(os.path.join(sMt4Dir, 'OTMql427')):
+                vWarn("sMt4Dir/MQL4/Python/OTMql427 not found: " + sMt4Dir)
+            elif sMt4Dir not in sys.path:
+                sys.path.insert(0, sMt4Dir)
 
     return (oOptions, lArgs,)
 
 def iMain():
+    # lGetOptionsArgs adds sMt4Dir/MQL4/Python to the sys.path
     (oOptions, lArgs,) = lGetOptionsArgs()
-    
+    # so lGetOptionsArgs must be called before this import
+    from ZmqBinListener import ZmqMixin
+
     if not lArgs:
         # subscribe to everything
         lArgs = ['']
     lTopics = lArgs
-    
+
     oMixin = None
     try:
         # sChartId is in oOptions
         oMixin = ZmqMixin(**oOptions.__dict__)
-        oMixin.eConnectToSubPub(lTopics)
-        oMixin.eConnectToReqRep()
+        oMixin.eConnectToSubPub(lTopics, iDir=zmq.SUB)
+        oMixin.eConnectToReqRep(iDir=zmq.REQ)
 
         i = 0
         while True:
@@ -135,48 +151,8 @@ def iMain():
             sType = "exec"
 
             sMarkIn = sMakeMark()
-            sRetval = oMixin.sPushToPending(sMarkIn, sRequest, sType, oOptions)
-            iSec = 0
-            # really need to fire this off in a thread
-            # and block waiting for it to appear on
-            # the retval queue
-            while len(dPENDING.keys()) > 0 and iSec < oOptions.iTimeout:
-                # zmq.NOBLOCK gives zmq.error.Again: Resource temporarily unavailable
-                sTopic = ""
-                time.sleep(10.0)
-                iSec += 10
-
-                if sType == "cmd":
-                    # sent as a ReqRep but comes back on SubPub
-                    try:
-                        sString = oMixin.oSubPubSocket.recv(zmq.NOBLOCK)
-                    except zmq.ZMQError as e:
-                        # iError = zmq.zmq_errno()
-                        iError = e.errno
-                        if iError == zmq.EAGAIN:
-                            time.sleep(1.0)
-                            continue
-                        if not sString: continue
-                else:
-                    sString = ""
-                    # sent as a ReqRep but messages come on SubPub anyway
-                    try:
-                        sString = oMixin.oReqRepSocket.recv(zmq.NOBLOCK)
-                    except zmq.error.Again:
-                        try:
-                            sString = oMixin.oSubPubSocket.recv(zmq.NOBLOCK)
-                        except zmq.ZMQError as e:
-                            # iError = zmq.zmq_errno()
-                            iError = e.errno
-                            if iError == zmq.EAGAIN:
-                                time.sleep(1.0)
-                                continue
-                        # sent as a ReqRep and comes back on comes back on ReqRep
-                        # I think this is blocking
-                if not sString: continue
-                oMixin.vPopFromPending(sString)
-                #? cleanup for timeout
-                if len(dPENDING.keys()) == 0: break
+            gRetval = oMixin.gCmdExec(sMarkIn, sRequest, sType, oOptions)
+            print gRetval
 
     except KeyboardInterrupt:
        if oOptions and oOptions.iDebugLevel >= 1:

@@ -9,7 +9,6 @@ import time
 import zmq
 
 from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
-from OTLibUtils import gRetvalToPython
 
 dPENDING = dict()
 
@@ -26,38 +25,76 @@ class ZmqMixin(object):
         self.iDebugLevel = dParams.get('iDebugLevel', 4)
         self.iSubPubPort = dParams.get('iSubPubPort', 2027)
         self.iReqRepPort = dParams.get('iReqRepPort', 2028)
-        self.sHostaddress = dParams.get('sHostaddress', '127.0.0.1')
-            
-    def eConnectToSubPub(self, lTopics):
+        self.sHostAddress = dParams.get('sHostAddress', '127.0.0.1')
+
+    def eBindToSub(self):
+        return self.eBindToSubPub(iDir=zmq.SUB)
+    
+    def eBindToPub(self):
+        return self.eBindToSubPub(iDir=zmq.PUB)
+    
+    def eBindToSubPub(self, iDir=zmq.PUB):
         """
         We bind on this Metatrader end, and connect from the scripts.
-        This is called by the scripts.
+        This is called by Metatrader.
         """
         if self.oSubPubSocket is None:
-            oSubPubSocket = self.oContext.socket(zmq.SUB)
-            s = self.sHostaddress +":"+str(self.iSubPubPort)
-            if self.iDebugLevel >= 1:
-                vInfo("Subscribing to: " + s +" with topics " +repr(lTopics))
-            oSubPubSocket.connect("tcp://"+s)
+            assert iDir in [zmq.PUB, zmq.SUB]
+            oSubPubSocket = self.oContext.socket(iDir)
+            assert oSubPubSocket, "eBindToSub: oSubPubSocket is null"
+            assert self.iSubPubPort, "eBindToSub: iSubPubPort is null"
+            sUrl = 'tcp://%s:%d' % (self.sHostAddress, self.iSubPubPort,)
+            vInfo("eBindToSub: Binding to SUB " +sUrl)
+            sys.stdout.flush()
+            oSubPubSocket.bind(sUrl)
+            time.sleep(0.1)
             self.oSubPubSocket = oSubPubSocket
-            for sElt in lTopics:
-                self.oSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
-        return ""
 
-    def eConnectToReqRep(self):
+    def eConnectToSubPub(self, lTopics, iDir=zmq.SUB):
         """
         We bind on this Metatrader end, and connect from the scripts.
         This is called by the scripts.
         """
+
+        if self.oSubPubSocket is None:
+            assert iDir in [zmq.PUB, zmq.SUB]
+            oSubPubSocket = self.oContext.socket(iDir)
+            s = self.sHostAddress +":"+str(self.iSubPubPort)
+            oSubPubSocket.connect("tcp://"+s)
+            self.oSubPubSocket = oSubPubSocket
+            if iDir == zmq.SUB:
+                if self.iDebugLevel >= 1:
+                    vInfo("Subscribing to: " + s +" with topics " +repr(lTopics))
+                for sElt in lTopics:
+                    self.oSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
+            else:
+                if self.iDebugLevel >= 1:
+                    vInfo("Publishing to: " + s)
+
+        return ""
+
+    def eConnectToReq(self):
+        return self.eConnectToReqRep(iDir=zmq.REQ)
+
+    def eConnectToRep(self):
+        return self.eConnectToReqRep(iDir=zmq.REP)
+
+    def eConnectToReqRep(self, iDir):
+        """
+        We bind on this Metatrader end, and connect from the scripts.
+        """
         if self.oReqRepSocket is None:
-            s = self.sHostaddress + ":" + str(self.iReqRepPort)
-            oReqRepSocket = self.oContext.socket(zmq.REQ)
-            if self.iDebugLevel >= 1:
-                vInfo("Requesting to:  " + s)
-            oReqRepSocket.connect("tcp://" + s)
+            assert iDir in [zmq.REQ, zmq.REP]
+            oReqRepSocket = self.oContext.socket(iDir)
+            assert oReqRepSocket, "eConnectToReqRep: oReqRepSocket is null"
+            assert self.iReqRepPort, "eConnectToReqRep: iReqRepPort is null"
+            sUrl = 'tcp://%s:%d' % (self.sHostAddress, self.iReqRepPort,)
+            vInfo("eConnectToReqRep: Connecting to %d: %s" % (iDir, sUrl,))
+            sys.stdout.flush()
+            oReqRepSocket.connect(sUrl)
             self.oReqRepSocket = oReqRepSocket
         return ""
-    
+
     def sRecvOnSubPub(self, iFlags=zmq.NOBLOCK):
         if self.oSubPubSocket is None:
             # was self.eBindListener()
@@ -83,6 +120,55 @@ class ZmqMixin(object):
             sRetval = ""
         return sRetval
 
+    def gCmdExec(self, sMarkIn, sRequest, sType, oOptions, iFlag=zmq.NOBLOCK):
+        global dPENDING
+
+        sRetval = self.sPushToPending(sMarkIn, sRequest, sType, oOptions)
+        iSec = 0
+        gRetval = ""
+        # really need to fire this off in a thread
+        # and block waiting for it to appear on
+        # the retval queue
+        while len(dPENDING.keys()) > 0 and iSec < oOptions.iTimeout:
+            # zmq.NOBLOCK gives zmq.error.Again: Resource temporarily unavailable
+            if iFlag > 0:
+                time.sleep(10.0)
+                iSec += 10
+
+            sString = ""
+            if sType == "cmd":
+                # sent as a ReqRep but comes back on SubPub
+                try:
+                    sString = self.oSubPubSocket.recv(iFlag)
+                except zmq.ZMQError as e:
+                    # iError = zmq.zmq_errno()
+                    iError = e.errno
+                    if iError == zmq.EAGAIN:
+                        time.sleep(1.0)
+                        iSec += 1
+                        continue
+            else:
+                # sent as a ReqRep - why not block if in a thread?
+                try:
+                    sString = self.oReqRepSocket.recv(iFlag)
+                except zmq.error.Again:
+                    try:
+                        sString = self.oSubPubSocket.recv(iFlag)
+                    except zmq.ZMQError as e:
+                        # iError = zmq.zmq_errno()
+                        iError = e.errno
+                        if iError == zmq.EAGAIN:
+                            time.sleep(1.0)
+                            iSec += 1
+                            continue
+                    # sent as a ReqRep and comes back on comes back on ReqRep
+                    # I think this is blocking
+            if not sString: continue
+            gRetval = self.zPopFromPending(sString)
+            #? cleanup for timeout
+            if len(dPENDING.keys()) == 0: break
+        return gRetval
+
     def sPushToPending(self, sMark, sRequest, sType, oOptions):
         """
         We push our requests onto a queue because some of them will be
@@ -103,17 +189,20 @@ class ZmqMixin(object):
             vDebug("%d Sent request of length %d: %s" % (i, iLen, sRequest))
         return ""
 
-    def vPopFromPending(self, sString):
+    def zPopFromPending(self, sString):
+        from OTMql427.SimpleFormat import gRetvalToPython
         global dPENDING
-        
+
         lElts = sString.split('|')
         if len(lElts) <= 4:
             vWarn("not enough | found in: %s" % (sString,))
-        if sString.startswith('tick'):
+            return ""
+
+        if sString.startswith('tick') or sString.startswith('timer'):
             print sString
-        elif sString.startswith('timer'):
-            print sString
-        elif sString.startswith('retval'):
+            return ""
+
+        if sString.startswith('retval'):
             sMarkOut = lElts[3]
             if sMarkOut not in dPENDING.keys():
                 print "WARN: %s not found in: %r" % (sMarkOut, dPENDING.keys())
@@ -128,13 +217,14 @@ class ZmqMixin(object):
                 sNull = self.oReqRepSocket.recv()
                 # zmq.error.ZMQError
             try:
-                gRetval = gRetvalToPython(sString, lElts)
+                gRetval = gRetvalToPython(lElts)
             except Exception as e:
-                vError("gRetvalToPython " +sString +str(e))
+                vError("zPopFromPending: error in gRetvalToPython " +sString +str(e))
             else:
-                print gRetval
+                return gRetval
         else:
             vWarn("Unrecognized message: " + sString)
+        return ""
 
     def bCloseContextSockets(self):
         """
@@ -154,4 +244,4 @@ class ZmqMixin(object):
         self.oContext.destroy()
         self.oContext = None
         return True
-
+    bCloseConnectionSockets = bCloseContextSockets

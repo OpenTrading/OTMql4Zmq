@@ -18,29 +18,29 @@ Also be sure to not leave it running between restarting Metatrader.
 
 """
 import sys
+import os
 from datetime import datetime
 from optparse import OptionParser
 import time
 
 import zmq
 
-from ZmqBinListener import ZmqMixin
-
 lKnownTypes = ['tick', 'cmd', 'retval', 'bar', 'timer']
 
-def oOptionParser():
+def oOptionParser(sUsage):
 
-    oParser = OptionParser(usage=__doc__.strip())
+    oParser = OptionParser(usage=sUsage)
     # We need to refactor with threads?
     oParser.add_option("-s", "--subport", action="store",
-                       dest="sSubPubPort", type="string",
-                       default="2027",
+                       dest="iSubPubPort", type="int",
+                       default=2027,
                        help="the TCP port number to subscribe to (default 2027)")
-    # if sReqRepPort is > 0 then publish a Zmq version query
-    oParser.add_option("-r", "--reqport", action="store", dest="sReqRepPort", type="string",
-                       default="2028",
+    # if iReqRepPort is > 0 then publish a Zmq version query
+    oParser.add_option("-r", "--reqport", action="store",
+                       dest="iReqRepPort", type="int",
+                       default=2028,
                        help="the TCP port number to publish to (default 2028)")
-    oParser.add_option("-a", "--address", action="store", dest="sHostaddress", type="string",
+    oParser.add_option("-a", "--address", action="store", dest="sHostAddress", type="string",
                        default="127.0.0.1",
                        help="the TCP address to subscribe on (default 127.0.0.1)")
     oParser.add_option("-C", "--chart", action="store", dest="sChartId", type="string",
@@ -49,14 +49,44 @@ def oOptionParser():
     oParser.add_option("-t", "--timeout", action="store", dest="iTimeout", type="int",
                       default=60,
                       help="timeout in seconds to wait for a reply (60)")
+    oParser.add_option('-P', "--mt4dir", action="store",
+                      dest="sMt4Dir", default=r"/t/Program Files/MetaTrader",
+                      help="directory for the installed Metatrader")
     oParser.add_option("-v", "--verbose", action="store", dest="iDebugLevel", type="string",
                        default="1",
                        help="the verbosity, 0 for silent 4 max (default 1)")
     return oParser
 
+def lGetOptionsArgs():
+    oParser = oOptionParser(__doc__.strip())
+    (oOptions, lArgs,) = oParser.parse_args()
+
+    assert int(oOptions.iSubPubPort) > 0 and int(oOptions.iSubPubPort) < 66000
+    # if iReqRepPort is > 0 then request a Zmq version query
+    assert int(oOptions.iReqRepPort) >= 0 and int(oOptions.iReqRepPort) < 66000
+    oOptions.iDebugLevel = int(oOptions.iDebugLevel)
+    assert 0 <= oOptions.iDebugLevel <= 5
+    assert oOptions.sHostAddress
+
+    sMt4Dir = oOptions.sMt4Dir
+    if sMt4Dir:
+        sMt4Dir = os.path.expanduser(os.path.expandvars(sMt4Dir))
+        if not os.path.isdir(sMt4Dir):
+            vWarn("sMt4Dir not found: " + sMt4Dir)
+        else:
+            sMt4Dir = os.path.join(sMt4Dir, 'MQL4', 'Python')
+            if not os.path.isdir(os.path.join(sMt4Dir, 'OTMql427')):
+                vWarn("sMt4Dir/MQL4/Python/OTMql427 not found: " + sMt4Dir)
+            elif sMt4Dir not in sys.path:
+                sys.path.insert(0, sMt4Dir)
+
+    return (oOptions, lArgs,)
+
 def iMain():
-    oParser = oOptionParser()
-    (oOptions, lArgs) = oParser.parse_args()
+    # lGetOptionsArgs adds sMt4Dir/MQL4/Python to the sys.path
+    (oOptions, lArgs,) = lGetOptionsArgs()
+    # so lGetOptionsArgs must be called before this import
+    from ZmqBinListener import ZmqMixin
 
     if not lArgs:
         # subscribe to everything
@@ -66,11 +96,11 @@ def iMain():
             assert sElt in lKnownTypes
     lTopics = lArgs
 
-    sSubPubPort = oOptions.sSubPubPort
-    assert 0 < int(sSubPubPort) < 66000
-    
-    sHostaddress = oOptions.sHostaddress
-    assert sHostaddress
+    iSubPubPort = oOptions.iSubPubPort
+    assert 0 < int(iSubPubPort) < 66000
+
+    sHostAddress = oOptions.sHostAddress
+    assert sHostAddress
 
     oMixin = None
     try:
@@ -79,7 +109,7 @@ def iMain():
         oMixin.oContext.linger = 0
         oMixin.eConnectToSubPub(lTopics)
 
-        sReqRepPort = oOptions.sReqRepPort
+        iReqRepPort = oOptions.iReqRepPort
         oReqRepSocket = None
 
         sTopic = ''
@@ -109,12 +139,12 @@ def iMain():
                         sTopic = sCmd
             except Exception as e:
                 print "ERROR: exception in recv: " +str(e)
-                        
+
             # if not sString: continue
             print "INFO: %s at %15.5f" % (sString , time.time())
             sTopic = ''
             # print map(ord, sString[:18])
-            
+
     except KeyboardInterrupt:
         pass
     finally:

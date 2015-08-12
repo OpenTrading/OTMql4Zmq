@@ -1,3 +1,8 @@
+commit 0c4db177879e80538c03ca09c4baf4bca70da77b
+Date:   Thu Aug 6 04:11:20 2015 +0300
+
+    Added MQL4/Python/OTMql427/ZmqListener.py
+
 commit 87f37b90f3ebf2b77f7de94cff1b42544333405a
 Date:   Wed Jul 29 01:52:48 2015 +0300
 
