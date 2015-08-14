@@ -42,7 +42,10 @@ class ZmqChart(Mq4Chart, ZmqMixin):
         # whilst the program is running
         print "receiving on the listener "
         sys.stdout.flush()
+        if self.oReqRepSocket is None:
+            self.eBindToRep()
         try:
+            # default is zmq.NOBLOCK
             sBody = self.sRecvOnReqRep()
         except Exception as e:
             print "Error eHeartBeat on the listener " +str(e)

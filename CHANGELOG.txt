@@ -1,3 +1,8 @@
+commit 935fe86a0c16fb7bef8213fda8476fa0ec32fef3
+Date:   Wed Aug 12 21:35:31 2015 +0300
+
+    Fixed using ZeroMQ for OpenTrader
+
 commit d17aaaac012757b4bbf179e89c9d7b40fbc29917
 Date:   Wed Aug 12 18:19:09 2015 +0300
 

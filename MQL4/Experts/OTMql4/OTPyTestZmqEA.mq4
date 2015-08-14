@@ -154,8 +154,8 @@ string ePyZmqPopQueue(string uChartId) {
             // but we will do than in Python
 	    // WE INCLUDED THE SMARK
             uOutgoing  = zOTLibSimpleFormatRetval("retval", uChartId, 0, "", uOutgoing);
-            vDebug("ePyZmqPopQueue: eSendOnSpeaker sending: " +uOutgoing);
-            eSendOnSpeaker(uChartId, "retval", uOutgoing, uIncoming);
+            vDebug("ePyZmqPopQueue: eSendOnPub sending: " +uOutgoing);
+            eReturnOnPub(uChartId, "retval", uOutgoing, uIncoming);
             eReturnOnReqRep(uChartId, "retval", "null", uIncoming);
         } else {
             // if the command is exec| - return as a REP on the listener
@@ -213,7 +213,7 @@ void OnTimer() {
 
     uInfo = "json|" + jOTTimerInformation();
     uMess  = zOTLibSimpleFormatTimer(uType, uCHART_ID, 0, uTime, uInfo);
-    eSendOnSpeaker(uCHART_ID, "timer", uMess, "");
+    eSendOnPub(uCHART_ID, "timer", uMess);
 }
 
 void OnTick() {
@@ -253,7 +253,7 @@ void OnTick() {
         uType = "tick";
         uMess  = zOTLibSimpleFormatTick(uType, uCHART_ID, 0, uTime, uInfo);
     }
-    eSendOnSpeaker(uCHART_ID, uType, uMess, "");
+    eSendOnPub(uCHART_ID, uType, uMess);
 }
 
 void OnDeinit(const int iReason) {

@@ -113,12 +113,14 @@ class ZmqMixin(object):
         return ""
 
     def eBindToReq(self):
-        return eBindToReqRep(self, iDir=zmq.REQ)
+        """unused"""
+        return self.eBindToReqRep(zmq.REQ)
 
     def eBindToRep(self):
-        return eBindToReqRep(self, iDir=zmq.REP)
+        """called by Mt4"""
+        return self.eBindToReqRep(zmq.REP)
 
-    def eBindToReqRep(self, iDir=zmq.REP):
+    def eBindToReqRep(self, iDir):
         """
         We bind on our Metatrader end, and connect from the scripts.
         """
@@ -158,25 +160,27 @@ class ZmqMixin(object):
             sRetval = ""
         return sRetval
 
-    def eReturnOnSpeaker(self, sTopic, sMsg, sOrigin=None):
-        return self.eSendOnSpeaker(sTopic, sMsg, sOrigin)
-
-    def eSendOnSpeaker(self, sTopic, sMsg, sOrigin=None):
+    def eReturnOnPub(self, sTopic, sMsg, sOrigin=None):
         assert sMsg.startswith(sTopic)
         if sOrigin:
 	    # This message is a reply in a cmd
             lOrigin = sOrigin.split("|")
-            assert lOrigin[0] in ['exec', 'cmd'], "eSendOnSpeaker: lOrigin[0] in ['exec', 'cmd'] " +repr(lOrigin)
+            assert lOrigin[0] in ['exec', 'cmd'], \
+                   "eReturnOnPub: lOrigin[0] not in ['exec', 'cmd'] " +repr(lOrigin)
             sMark = lOrigin[3]
             lMsg = sMsg.split("|")
-            assert lMsg[0] == 'retval', "eSendOnSpeaker: lMsg[0] in ['retval'] " +repr(lMsg)
+            assert lMsg[0] == 'retval', \
+                   "eReturnOnPub: lMsg[0] not in ['retval'] " +repr(lMsg)
             lMsg[3] = sMark
 	    # Replace the mark in the reply with the mark in the cmd
             sMsg = '|'.join(lMsg)
 
+        return self.eSendOnPub(sTopic, sMsg, sOrigin)
+
+    def eSendOnPub(self, sTopic, sMsg, sIgnored=None):
         if self.oSubPubSocket is None:
             self.eBindToPub()
-        assert self.oSubPubSocket, "eSendOnSpeaker: oSubPubSocket is null"
+        assert self.oSubPubSocket, "eSendOnPub: oSubPubSocket is null"
         self.oSubPubSocket.send(sMsg)
         return ""
 
@@ -184,7 +188,7 @@ class ZmqMixin(object):
         assert sMsg.startswith(sTopic), \
                "eSendOnReqRep: sMsg.startswith(sTopic) failed" + sMsg +" " +sTopic
         if sTopic not in lKNOWN_TOPICS:
-            sRetval = "eSendOnSpeaker: eSendOnReqRep unhandled topic: " +sTopics +" " +sMess
+            sRetval = "eSendOnReqRep: eSendOnReqRep unhandled topic: " +sTopics +" " +sMess
             vError(sRetval)
             return sRetval
         assert self.oReqRepSocket, "eSendOnReqRep: oReqRepSocket is null"
