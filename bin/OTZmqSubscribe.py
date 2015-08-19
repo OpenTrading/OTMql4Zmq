@@ -86,7 +86,7 @@ def iMain():
     # lGetOptionsArgs adds sMt4Dir/MQL4/Python to the sys.path
     (oOptions, lArgs,) = lGetOptionsArgs()
     # so lGetOptionsArgs must be called before this import
-    from ZmqBinListener import ZmqMixin
+    from ZmqBinListener import ZmqBinMixin
 
     if not lArgs:
         # subscribe to everything
@@ -104,7 +104,7 @@ def iMain():
 
     oMixin = None
     try:
-        oMixin = ZmqMixin(**oOptions.__dict__)
+        oMixin = ZmqBinMixin(**oOptions.__dict__)
         #print("INFO: setting linger to 0")
         oMixin.oContext.linger = 0
         oMixin.eConnectToSubPub(lTopics)

@@ -8,118 +8,18 @@ import time
 
 import zmq
 
+from OTMql427.ZmqListener import ZmqMixin
+
 from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
 
 dPENDING = dict()
 
-class ZmqMixin(object):
+class ZmqBinMixin(ZmqMixin):
     oContext = None
 
     def __init__(self, sChartId, **dParams):
-        self.dParams = dParams
-        self.sChartId = sChartId
-        if self.oContext is None:
-            self.oContext = zmq.Context()
-        self.oSubPubSocket = None
-        self.oReqRepSocket = None
-        self.iDebugLevel = dParams.get('iDebugLevel', 4)
-        self.iSubPubPort = dParams.get('iSubPubPort', 2027)
-        self.iReqRepPort = dParams.get('iReqRepPort', 2028)
-        self.sHostAddress = dParams.get('sHostAddress', '127.0.0.1')
-
-    def eBindToSub(self):
-        return self.eBindToSubPub(iDir=zmq.SUB)
+        ZmqMixin.__init__(self, sChartId, **dParams)
     
-    def eBindToPub(self):
-        return self.eBindToSubPub(iDir=zmq.PUB)
-    
-    def eBindToSubPub(self, iDir=zmq.PUB):
-        """
-        We bind on this Metatrader end, and connect from the scripts.
-        This is called by Metatrader.
-        """
-        if self.oSubPubSocket is None:
-            assert iDir in [zmq.PUB, zmq.SUB]
-            oSubPubSocket = self.oContext.socket(iDir)
-            assert oSubPubSocket, "eBindToSub: oSubPubSocket is null"
-            assert self.iSubPubPort, "eBindToSub: iSubPubPort is null"
-            sUrl = 'tcp://%s:%d' % (self.sHostAddress, self.iSubPubPort,)
-            vInfo("eBindToSub: Binding to SUB " +sUrl)
-            sys.stdout.flush()
-            oSubPubSocket.bind(sUrl)
-            time.sleep(0.1)
-            self.oSubPubSocket = oSubPubSocket
-
-    def eConnectToSubPub(self, lTopics, iDir=zmq.SUB):
-        """
-        We bind on this Metatrader end, and connect from the scripts.
-        This is called by the scripts.
-        """
-
-        if self.oSubPubSocket is None:
-            assert iDir in [zmq.PUB, zmq.SUB]
-            oSubPubSocket = self.oContext.socket(iDir)
-            s = self.sHostAddress +":"+str(self.iSubPubPort)
-            oSubPubSocket.connect("tcp://"+s)
-            self.oSubPubSocket = oSubPubSocket
-            if iDir == zmq.SUB:
-                if self.iDebugLevel >= 1:
-                    vInfo("Subscribing to: " + s +" with topics " +repr(lTopics))
-                for sElt in lTopics:
-                    self.oSubPubSocket.setsockopt(zmq.SUBSCRIBE, sElt)
-            else:
-                if self.iDebugLevel >= 1:
-                    vInfo("Publishing to: " + s)
-
-        return ""
-
-    def eConnectToReq(self):
-        return self.eConnectToReqRep(iDir=zmq.REQ)
-
-    def eConnectToRep(self):
-        return self.eConnectToReqRep(iDir=zmq.REP)
-
-    def eConnectToReqRep(self, iDir):
-        """
-        We bind on this Metatrader end, and connect from the scripts.
-        """
-        if self.oReqRepSocket is None:
-            assert iDir in [zmq.REQ, zmq.REP]
-            oReqRepSocket = self.oContext.socket(iDir)
-            assert oReqRepSocket, "eConnectToReqRep: oReqRepSocket is null"
-            assert self.iReqRepPort, "eConnectToReqRep: iReqRepPort is null"
-            sUrl = 'tcp://%s:%d' % (self.sHostAddress, self.iReqRepPort,)
-            vInfo("eConnectToReqRep: Connecting to %d: %s" % (iDir, sUrl,))
-            sys.stdout.flush()
-            oReqRepSocket.connect(sUrl)
-            self.oReqRepSocket = oReqRepSocket
-        return ""
-
-    def sRecvOnSubPub(self, iFlags=zmq.NOBLOCK):
-        if self.oSubPubSocket is None:
-            # was self.eBindListener()
-            # needs lTopics: self.eConnectToSubPub(lTopics)
-            pass
-        assert self.oSubPubSocket, "sRecvOnSubPub: oSubPubSocket is null"
-        try:
-            sRetval = self.oSubPubSocket.recv(flags=iFlags)
-        except zmq.ZMQError as e:
-            # zmq4: iError = zmq.zmq_errno()
-            iError = e.errno
-            if iError == zmq.EAGAIN:
-                #? This should only occur if iFlags are zmq.NOBLOCK
-                time.sleep(1.0)
-            else:
-                vWarn("sRecvOnSubPub: ZMQError in Recv listener: %d %s" % (
-                    iError, zmq.strerror(iError),))
-                sys.stdout.flush()
-            sRetval = ""
-        except Exception as e:
-            vError("sRecvOnSubPub: Failed Recv listener: " +str(e))
-            sys.stdout.flush()
-            sRetval = ""
-        return sRetval
-
     def gCmdExec(self, sMarkIn, sRequest, sType, oOptions, iFlag=zmq.NOBLOCK):
         global dPENDING
 
@@ -227,23 +127,3 @@ class ZmqMixin(object):
         else:
             vWarn("Unrecognized message: " + sString)
         return ""
-
-    def bCloseContextSockets(self):
-        """
-        same
-        """
-        if self.oSubPubSocket:
-            self.oSubPubSocket.setsockopt(zmq.LINGER, 0)
-            time.sleep(0.1)
-            self.oSubPubSocket.close()
-        if self.oReqRepSocket:
-            self.oReqRepSocket.setsockopt(zmq.LINGER, 0)
-            time.sleep(0.1)
-            self.oReqRepSocket.close()
-        if self.iDebugLevel >= 1:
-            print "destroying the context"
-        sys.stdout.flush()
-        self.oContext.destroy()
-        self.oContext = None
-        return True
-    bCloseConnectionSockets = bCloseContextSockets

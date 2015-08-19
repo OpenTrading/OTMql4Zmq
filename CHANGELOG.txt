@@ -1,3 +1,8 @@
+commit dec1fd2fa1e0fba4bd613a0e3541eb0e7c9355a0
+Date:   Fri Aug 14 23:19:20 2015 +0300
+
+    Fixes for OTPyTestZmqEA with OpenTrader
+
 commit 935fe86a0c16fb7bef8213fda8476fa0ec32fef3
 Date:   Wed Aug 12 21:35:31 2015 +0300
 

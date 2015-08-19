@@ -16,7 +16,7 @@ import traceback
 
 import zmq
 
-from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
+from OTMql427.OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
 from OTMql427.SimpleFormat import lKNOWN_TOPICS
 
 oLOG = logging
@@ -97,7 +97,7 @@ class ZmqMixin(object):
 
     def eConnectToReqRep(self, iDir):
         """
-        We bind on our Metatrader end, and connect from the scripts.
+        We bind on the Metatrader end, and connect from the scripts.
         """
         if self.oReqRepSocket is None:
             assert iDir in [zmq.REP, zmq.REQ], \
