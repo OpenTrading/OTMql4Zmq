@@ -1,3 +1,8 @@
+commit cf5cfca2f3bd4bfa13feeb8a03d23c19889f99c2
+Date:   Fri Aug 21 16:25:02 2015 +0300
+
+    Restored the LocalFree in OTMql4Zmq.mqh that had been commented out during debugging
+
 commit b65a66949112514c80a300f76931050e5906078b
 Date:   Wed Aug 19 17:58:53 2015 +0300
 

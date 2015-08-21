@@ -27,6 +27,8 @@ import zmq
 
 lKnownTypes = ['tick', 'cmd', 'retval', 'bar', 'timer']
 
+from OTLibLog import vError, vWarn, vInfo, vDebug, vTrace
+
 def oOptionParser(sUsage):
 
     oParser = OptionParser(usage=sUsage)
