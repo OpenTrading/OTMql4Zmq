@@ -3,7 +3,7 @@ for asynchronous communications between financial and trading applications.
 
 https://github.com/OpenTrading/OTMql4Zmq/
 
-With ZeroMQ http://zeromq.org/ you can:
+With ZeroMQ (http://zeromq.org/) you can:
 * Connect your code in any language, on any platform.
 * Carries messages across inproc, IPC, TCP, TIPC, multicast.
 * Smart patterns like pub-sub, push-pull, and router-dealer.
@@ -12,49 +12,49 @@ With ZeroMQ http://zeromq.org/ you can:
 * Supports every modern language and platform.
 * Build any architecture: centralized, distributed, small, or large.
 
-There are now two ways of using ZeroMq via in this package:
+There are two ways of using ZeroMq via in this package:
 
-1. Directly using compiled DLL. We were having problems with the compiled DLL,
-   but these are now fixed, as we have dropped back to ZeroMQ v2.2.0.  See
+1. Directly using a compiled DLL. We using ZeroMQ v2.2.0 to compile against,
+   but you should be able to connect to it from any more recent version.  See
    [[CompiledDllOTMql4Zmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq]].
    
 2. Through [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]]
    in Python under Metatrader using 
    [[OTMql4Py|https://github.com/OpenTrading/OTMql4Py]].
-   OTMql4Zmq is working fine in both directions.
+   This is slower, but gives you all of Python under Mt4.
 
-You may also want to look at our RabbitMQ solution,
-which is a pure Python solution using OTMql4Py and also works without issues:
+In general, you can use any version of ZeroMQ later than v2.2.0 to
+communicate with the either way of using ZeroMq, , so for example you can
+use the latest [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]]
+for client scripts talking to an EA that uses the compiled DLL:
+see [[Scripts|https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts]].
+
+You may also want to look at our RabbitMQ solution, which is a pure
+Python solution also using OTMql4Py:
 https://github.com/OpenTrading/OTMql4AMQP/
 
 You may want to also look at:
 https://github.com/OpenTrading/OpenTrader
 which provides a command-line interpreter to speak to the OTMql4AMQP
-enabled Metatrader.
+or OTMql4Zmq enabled Metatrader (either version).
+Most of our testing of this package is done from OpenTrader.
 
 === Pre-Release
 
 **This is a work in progress - a developers' pre-release version.**
 
-OTMql4Zmq works with Metatrader on builds > 6xx, but the test suite and documentation
-still need writing, as well as testing on different versions of
-Windows and Mt4.
+OTMql4Zmq works with Metatrader on builds > 6xx, but it still needs
+testing on different versions of Windows and Mt4.
 
-ZeroMQ 4.x is not yet supported. The source code for the Compiled DLL has been moved to
+The source code for the Compiled DLL has been moved to
 https://github.com/OpenTrading/mql4zmq/
 to better document the changes we made in it from the original source.
 As a convenience, we have checked in the binaries from that project
 to the {{{src/mql4zmq}}} directory. In theory the files in this project
-will always mirror that project, but that project is always master.
-
-[[mql4zmq|https://github.com/OpenTrading/mql4zmq]] is being compiled against a v2.2.0
-release of [[ZeroMQ|http://zeromq.org]]. If anyone is good at MSVC and ZeroMQ,
-if you could look at the code in that project and help us with ZeroMQ 4.x
-version improvements, we'd be grateful. In general, you can use any version of
-ZeroMQ later than v2.2.0 to communicate with the
-[[mql4zmq|https://github.com/OpenTrading/mql4zmq]] libraries, so for example you can
-use the latest [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]] for
-client scripts: see [[Scripts|https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts]].
+will always mirror that project, but that project may get broken as we
+try to move it to compiling against ZeroMQ 4.x. If anyone is good at MSVC
+and ZeroMQ, if you could look at the code in that project and help us with
+ZeroMQ 4.x version improvements, we'd be grateful.
 
 The project wiki should be open for editing by anyone logged into GitHub:
 **Please report any system it works or doesn't work on in the wiki:
