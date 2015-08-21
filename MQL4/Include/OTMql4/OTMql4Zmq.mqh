@@ -258,7 +258,8 @@ string zmq_msg_data (int &msg[]) {
 	// The following assumes that the DLL has used LocalAlloc
 	// (or an indirect equivalent). If not,
 	// then the following line may not fix the leak, and may even cause a crash.
-	//?LocalFree(iRecvPtr);
+	//?
+	LocalFree(iRecvPtr);
     } else {
 	uMessage = uAnsi2Unicode(iRecvPtr);
     }

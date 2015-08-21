@@ -1,3 +1,8 @@
+commit b65a66949112514c80a300f76931050e5906078b
+Date:   Wed Aug 19 17:58:53 2015 +0300
+
+    Added missing MQL4/Include/OTMql4/OTMql4Zmq.mqh
+
 commit dec1fd2fa1e0fba4bd613a0e3541eb0e7c9355a0
 Date:   Fri Aug 14 23:19:20 2015 +0300
 

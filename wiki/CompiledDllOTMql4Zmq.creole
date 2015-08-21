@@ -17,6 +17,6 @@ see [[TestExpert]].
 
 === Compiled DLL Changes
 
-The libraries checked in to the {{{src/}}} directory are from:
+The libraries checked in to the {{{src/}}} directory
+and the header file {{{MQL4/Include/OTMql4/OTMql4Zmq.mqh}}} are from:
 https://github.com/OpenTrading/mql4zmq/
-and any changes and issues will be tracked there.

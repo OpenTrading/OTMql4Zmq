@@ -34,3 +34,11 @@ src\mql4zmq\pre-compiled\libzmq.dll
 => c:\Windows\System32\libzmq.dll or
 whatever the windows system library is for your version of Windows.
 }}}
+
+These dlls and the header file {{{MQL4/Include/OTMql4/OTMql4Zmq.mqh}}}
+are maintained in the https://github.com/OpenTrading/mql4zmq/ project.
+These to projects should always be in sync, but if there is ever a
+difference, use the files that are in this project and report bugs
+against them here. We'll push the changes upstream to that project,
+and that project may be "broken" as it tries to upgrade to ZeroMQ 4.x.
+
