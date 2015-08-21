@@ -75,6 +75,7 @@ int OnInit() {
 
     iTIMEFRAME = Period();
 
+    vLogInit();
     if (GlobalVariableCheck("fZmqContextUsers") == true) {
         fZMQ_CONTEXT_USERS=GlobalVariableGet("fZmqContextUsers");
     } else {
@@ -238,7 +239,7 @@ void OnTimer() {
 	if (bRetval == false) {
 	    vWarn("OnTimer: failed bZmqSend");
 	} else {
-	    //vTrace("OnTimer: bZmqSend sent " +uMess);
+	    vDebug("OnTimer: bZmqSend sent " +uMess);
 	}
     }
     

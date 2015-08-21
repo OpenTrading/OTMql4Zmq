@@ -1,3 +1,8 @@
+commit b5c6b9bb57456aef5a508b001b653d313104aa82
+Date:   Fri Aug 21 17:51:18 2015 +0300
+
+    Fixes from MetaMemoryT
+
 commit cf5cfca2f3bd4bfa13feeb8a03d23c19889f99c2
 Date:   Fri Aug 21 16:25:02 2015 +0300
 
