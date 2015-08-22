@@ -16,18 +16,18 @@ There are two ways of using ZeroMq via in this package:
 
 1. Directly using a compiled DLL. We using ZeroMQ v2.2.0 to compile against,
    but you should be able to connect to it from any more recent version.  See
-   CompiledDllOTMql4Zmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq).
+   CompiledDllOTMql4Zmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/CompiledDllOTMql4Zmq) .
    
 2. Through PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
    in Python under Metatrader using 
-   OTMql4Py (https://github.com/OpenTrading/OTMql4Py).
+   OTMql4Py (https://github.com/OpenTrading/OTMql4Py) .
    This is slower, but gives you all of Python under Mt4.
 
 In general, you can use any version of ZeroMQ later than v2.2.0 to
 communicate with the either way of using ZeroMq, , so for example you can
 use the latest PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
 for client scripts talking to an EA that uses the compiled DLL:
-see Scripts (https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts).
+see Scripts (https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts) .
 
 You may also want to look at our RabbitMQ solution, which is a pure
 Python solution also using OTMql4Py:
@@ -72,12 +72,12 @@ not overwrite any system files, and keeps its files in subdirectories
 called {{{OTMql4}}}.
 
 For the Compiled DLL, see
-Installation (https://github.com/OpenTrading/OTMql4Zmq/wiki/Installation).
+Installation (https://github.com/OpenTrading/OTMql4Zmq/wiki/Installation) .
 
 See PyZmq (https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq)
 for instructions for installing {{{pyzmq}} into your Python. You will need
 to run the Python {{{OTZmqCmdEA.mq4}}}, or to run the
-Scripts (https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts).
+Scripts (https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts) .
 in the {{{bin}}} directory.
 
 === Project

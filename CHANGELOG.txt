@@ -1,3 +1,8 @@
+commit 676982c275d65c3c31f229751c5620f420dc8b79
+Date:   Fri Aug 21 22:43:29 2015 +0300
+
+    Clarified installation in the wiki
+
 commit c7e8d0e8202569a5f3584a1f19bb61d8b974be54
 Date:   Fri Aug 21 19:10:59 2015 +0300
 
