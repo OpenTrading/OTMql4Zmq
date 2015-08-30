@@ -1,3 +1,8 @@
+commit edba7359dbaedf025f2e07e3bcd6a9d25b324c3a
+Date:   Sat Aug 22 06:10:37 2015 +0300
+
+    Github creole bugs workaround
+
 commit 676982c275d65c3c31f229751c5620f420dc8b79
 Date:   Fri Aug 21 22:43:29 2015 +0300
 

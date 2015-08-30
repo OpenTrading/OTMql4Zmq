@@ -4,7 +4,7 @@
 In general, recusively copy everything in the {{{MQL4}}} directory
 to your {{{c:\Program Files\[metatrader directory]\MQL4}}} directory.
 
-This is the same making the following 3 directories if they don't aleady exist:
+This is the same as making the following 3 directories if they don't aleady exist:
 * {{{c:\Program Files\[metatrader directory]\MQL4\Experts\OTMql4}}}
 * {{{c:\Program Files\[metatrader directory]\MQL4\Include\OTMql4}}}
 * {{{c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4}}}

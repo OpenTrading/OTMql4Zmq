@@ -1,12 +1,5 @@
 // -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 
-/*
-THIS DOES NOT WORK YET: DO NOT USE, unless you can help us find the problem.
-See
-https://github.com/OpenTrading/OTMql4Zmq/issues/1
-and
-
-*/
 
 #property copyright "Copyright 2013 OpenTrading"
 #property link      "https://github.com/OpenTrading/"

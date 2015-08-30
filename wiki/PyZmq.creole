@@ -14,8 +14,8 @@ directory of the distribution, to publish to ({{{OTZmqPublish.py}}})
 or subscribe from {{{OTZmqSubscribe.py}}} the Zmq running in Mt4,
 either the compiled DLL OTMql4Zmq, or the Python OTMql4Zmq.
 
-So even if you are using the compiled DLL OTMql4Zmq (which is currently broken),
-you still want a Python and PyZmq installed to run the scripts in {{{bin}}}.
+So even if you are using the compiled DLL OTMql4Zmq, you may still
+want a Python with PyZmq installed to run the test scripts in {{{bin}}}.
 
 === Installation
 
