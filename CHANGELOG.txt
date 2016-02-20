@@ -1,3 +1,8 @@
+commit e497fd7ed7bef19695c55ab08000280036eeb6d1
+Date:   Fri Feb 19 18:58:36 2016 +0200
+
+    Documented the need for the MS VC 10.0 runtime
+
 commit ba49c99ab616fe4621c2ebfd742ad422bc50cd16
 Date:   Sun Aug 30 17:26:16 2015 +0300
 

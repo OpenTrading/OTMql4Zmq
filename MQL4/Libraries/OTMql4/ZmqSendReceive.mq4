@@ -27,7 +27,7 @@
 #import
 
 bool bZmqSend(int iSpeaker, string uMessage) {
-    // returns true on success, false on failure
+    //  Returns true on success, false on failure
     int iPointer[1];
     bool bRetval = false;
     int iError;
@@ -103,14 +103,14 @@ string uZmqReceive(int iListener) {
 	    return("");
 	}
 	// Note: If we do NOT specify ZMQ_NOBLOCK it will wait here until
-	//       we receive a message. This is a problem as this function
-	//       will effectively block the MQL4 'Start' function from firing
-	//       when the next tick arrives if no message has arrived from
-	//       the publisher. If you want it to block and, therefore, instantly
-	//       receive messages (doesn't have to wait until next tick) then
-	//       change the below line to:
+	// we receive a message. This is a problem as this function
+	// will effectively block the MQL4 'Start' function from firing
+	// when the next tick arrives if no message has arrived from
+	// the publisher. If you want it to block and, therefore, instantly
+	// receive messages (doesn't have to wait until next tick) then
+	// change the below line to:
 	//
-	//       if (zmq_recv(iListener, iRequestPtr) != -1)
+	// if (zmq_recv(iListener, iRequestPtr) != -1)
 
 	//vTrace("uZmqReceive: calling zmq_recv");
 	// Will return -1 if no message was received.

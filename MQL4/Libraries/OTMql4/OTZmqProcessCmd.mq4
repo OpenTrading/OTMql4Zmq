@@ -1,23 +1,19 @@
 // -*-mode: c; c-style: stroustrup; c-basic-offset: 4; coding: utf-8-dos -*-
 
-/*
-
-This is the replacement for what should be Eval in Mt4:
-take a string expression and valuate it.
-
-I know this is verbose and could be done more compactly,
-but it's clean and robust so I'll leave it like this for now.
-
-If you want to extend this for your own functions you have declared in Mql4,
-look at how zOTZmqProcessCmd calls zOTLibProcessCmd and then
-goes on and handles it if zOTLibProcessCmd didn't.
-
-
- */
-
 #property copyright "Copyright 2013 OpenTrading"
 #property link      "https://github.com/OpenTrading/"
 #property library
+
+//  This is the replacement for what should be Eval in Mt4:
+//  take a string expression and valuate it.
+//  
+//  I know this is verbose and could be done more compactly,
+//  but it's clean and robust so I'll leave it like this for now.
+//  
+//  If you want to extend this for your own functions you have declared in Mql4,
+//  look at how zOTZmqProcessCmd calls zOTLibProcessCmd and then
+//  goes on and handles it if zOTLibProcessCmd didn't.
+//  
 
 #include <stdlib.mqh>
 #include <stderror.mqh>
@@ -29,16 +25,14 @@ goes on and handles it if zOTLibProcessCmd didn't.
 #include <OTMql4/OTMql4Zmq.mqh>
 
 string zOTZmqProcessCmd(string uMess) {
-    /*
-       This is the replacement for what should be Eval in Mt4:
-       take a string expression and evaluate it.
-       zMt4LibProcessCmd handles base Mt4 expressions, and
-       zOTLibProcessCmd also handles base OpenTrading expressions.
-       and zOTZmqProcessCmd also handles base OTMql4Zmq expressions.
+    //  This is the replacement for what should be Eval in Mt4:
+    //  take a string expression and evaluate it.
+    //  zMt4LibProcessCmd handles base Mt4 expressions, and
+    //  zOTLibProcessCmd also handles base OpenTrading expressions.
+    //  and zOTZmqProcessCmd also handles base OTMql4Zmq expressions.
 
-       Returns the result of processing the command.
-       Returns "" if there is an error.
-    */
+    //  Returns the result of processing the command.
+    //  Returns "" if there is an error.
 
     string uType, uChartId, uIgnore, uMark, uCmd;
     string uArg1="";

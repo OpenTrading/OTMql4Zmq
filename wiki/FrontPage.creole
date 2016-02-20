@@ -106,8 +106,8 @@ https://github.com/OpenTrading/OTMql4Zmq/issues
 
 Use the Wiki to start topics for discussion:
 https://github.com/OpenTrading/OTMql4Zmq/wiki/Home
-It's good to use the wiki for knowledge capture, and then we can pull
-the important pages back into the documentation in the share/doc directory.
+It's good to use the wiki for knowledge capture, and then we can pull the
+important pages back into the documentation into the {{{wiki}}} subdirectory.
 You may need to be signed into github.com to see or edit in the wiki.
 
 
