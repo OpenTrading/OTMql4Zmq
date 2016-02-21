@@ -1,12 +1,13 @@
 
 == Title Index
 
+* [[CodeLibraries]]
+* [[CodeScripts]]
 * [[CompiledDllHistory]]
 * [[CompiledDllOTMql4Zmq]]
 * [[FrontPage]]
 * [[Home]]
 * [[Installation]]
-* [[Libraries]]
 * [[OTMql4ZmqTest]]
 * [[OTZmqProcessCmd]]
 * [[PyZmq]]
