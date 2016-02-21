@@ -7,6 +7,7 @@
 * [[Home]]
 * [[Installation]]
 * [[Libraries]]
+* [[OTMql4ZmqTest]]
 * [[OTZmqProcessCmd]]
 * [[PyZmq]]
 * [[PythonOTMql4Zmq]]

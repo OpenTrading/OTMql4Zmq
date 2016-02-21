@@ -2,8 +2,11 @@
 
 #property copyright "Copyright 2014 Open Trading"
 #property link      "https://github.com/OpenTrading/"
-
 #property show_inputs
+
+//  A simple test Script that doesn't do much, but it's a start.
+//  Attach it to a chart, select the tests you want to run,
+//  and a MessageBox will pop up to tell you if it passed or failed.
 
 #include <OTMql4/OTLibStrings.mqh>
 #include <OTMql4/OTMql4Zmq.mqh>
@@ -14,10 +17,8 @@ which tests Zmq as well as our ProcessCmd wrapper
 */
 #include <OTMql4/OTZmqProcessCmd.mqh>
 
-/*
-We will put each test as a boolean external input so the user
-can select which tests to run.
-*/
+//  We will put each test as a boolean external input so the user
+//  can select which tests to run.
 
 extern bool bTestErrorMessages=true;
 

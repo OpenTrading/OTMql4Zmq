@@ -1,0 +1,20 @@
+===  MQL4/Scripts/OTMql4/OTMql4ZmqTest.mq4
+
+
+A simple test Script that doesn't do much, but it's a start.
+Attach it to a chart, select the tests you want to run,
+and a MessageBox will pop up to tell you if it passed or failed.
+We will put each test as a boolean external input so the user
+can select which tests to run.
+
+{{{bool bAssertStrerrortEqual(int i, string u) }}}
+
+{{{string eTestErrorMessages() }}}
+
+{{{void OnStart() }}}
+
+{{{void OnDeinit(const int reason) }}}
+
+Source code: [[MQL4/Scripts/OTMql4/OTMql4ZmqTest.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Scripts/OTMql4/OTMql4ZmqTest.mq4]]
+
+
