@@ -56,49 +56,6 @@ try to move it to compiling against ZeroMQ 4.x. If anyone is good at MSVC
 and ZeroMQ, if you could look at the code in that project and help us with
 ZeroMQ 4.x version improvements, we'd be grateful.
 
-The project wiki should be open for editing by anyone logged into GitHub:
-**Please report any system it works or doesn't work on in the wiki:
-include the Metatrader build number, the origin of the metatrader exe,
-the Windows version, and the ZeroMq version and version of the Python pyzmq.**
-This code in known to run under Linux Wine (1.7.x), so this project
-bridges Metatrader to ZeroMq under Linux.
-
-=== Installation
-
-For the moment there is no installer: just "git clone" or download the
-zip from github.com and unzip into an empty directory. Then recursively copy
-the folder MQL4 over the MQL4 folder of your Metatrader installation. It will
-not overwrite any system files, and keeps its files in subdirectories
-called {{{OTMql4}}}.
-
-For the Compiled DLL, see
-[[Installation|https://github.com/OpenTrading/OTMql4Zmq/wiki/Installation]] .
-
-See [[PyZmq|https://github.com/OpenTrading/OTMql4Zmq/wiki/PyZmq]]
-for instructions for installing {{{pyzmq}} into your Python. You will need
-to run the Python {{{OTZmqCmdEA.mq4}}}, or to run the
-[[Scripts|https://github.com/OpenTrading/OTMql4Zmq/wiki/Scripts]] .
-in the {{{bin}}} directory.
-
-
-==== Dependencies
-
-You will need the Microsoft Visual C version 10.0 (2010) runtime
-libraries installed. On some versions of Windows, these may already be
-installed, or other software may already have installed these for you.
-You can get the VC 10.0 Runtime from the links below:
-
-*    Microsoft Visual C++ 2010 Redistributable Package (x86)
-    http://www.microsoft.com/downloads/en/details.aspx?FamilyID=a7b7a05e-6de6-4d3a-a423-37bf0912db84&displaylang=en
-    https://www.microsoft.com/en-us/download/details.aspx?id=5555
-
-*   Microsoft Visual C++ 2010 Redistributable Package (x64)
-    http://www.microsoft.com/downloads/en/details.aspx?displaylang=en&FamilyID=bd512d9e-43c8-4655-81bf-9350143d5867
-    https://www.microsoft.com/en-us/download/details.aspx?id=14632
-
-These are required to be able to load the {{{libxmq.dll}}} as it was
-compiled by Microsoft Visual C++ 2010 Express.
-
 === Project
 
 Please file any bugs in the issue tracker:
@@ -109,6 +66,13 @@ https://github.com/OpenTrading/OTMql4Zmq/wiki/Home
 It's good to use the wiki for knowledge capture, and then we can pull the
 important pages back into the documentation into the {{{wiki}}} subdirectory.
 You may need to be signed into github.com to see or edit in the wiki.
+
+The project wiki should be open for editing by anyone logged into GitHub:
+**Please report any system it works or doesn't work on in the wiki:
+include the Metatrader build number, the origin of the metatrader exe,
+the Windows version, and the ZeroMq version and version of the Python pyzmq.**
+This code in known to run under Linux Wine (1.7.x), so this project
+bridges Metatrader to ZeroMq under Linux.
 
 
 * [[Home|https://github.com/OpenTrading/OTMql4Zmq/wiki/Home]]

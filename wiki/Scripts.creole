@@ -53,3 +53,7 @@ In fact even that is not true - this only works with OTZmqCmdEA.mq4 at the momen
 We'll straighten this out later.
 
 See also: [[CodeScripts]]
+
+
+----
+Parent: [[Home]]

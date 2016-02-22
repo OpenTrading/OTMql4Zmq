@@ -1,8 +1,0 @@
-===  Libraries
-
-
-See [[MQL4/Libraries/OTMql4/|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Libraries/OTMql4]]
-
-
-*  [[OTZmqProcessCmd]]
-*  [[ZmqSendReceive]]

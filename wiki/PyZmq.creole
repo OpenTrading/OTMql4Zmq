@@ -31,4 +31,5 @@ Otherwise, download the Python egg:
 https://pypi.python.org/packages/2.7/p/pyzmq/pyzmq-14.5.0-py2.7-win32.egg
 and {{{easy_install}}} it into your Python's site-packages directory.
 
-
+----
+Parent: [[Home]]

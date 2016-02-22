@@ -1,4 +1,24 @@
-Welcome to the OTMql4Zmq wiki!
+Welcome to the OTMql4Zmq project!
+
+OTMql4Zmq provide Metatrader 4 bindings for ZeroMQ, the high-speed messaging protocol
+for asynchronous communications between financial and trading applications.
+
+
+=== Documentation
+
+* [[Installation]]
+* [[PyZmq]]
+* [[CompiledDllOTMql4Zmq]]
+* [[CompiledDllHistory]]
+* [[TestExpert]]
+* [[Scripts]]
+* [[CodeScripts]]
+* [[CodeLibraries]]
+* [[RoadMap]]
+
+* [[TitleIndex]]
+
+=== Project ===
 
 Please file any bugs in the issues tracker:
 https://github.com/OpenTrading/OTMql4Zmq/issues
@@ -8,11 +28,3 @@ https://github.com/OpenTrading/OTMql4Zmq/wiki
 It's better to use the wiki for knowledge capture, and then we can pull
 the important pages back into the documentation in the share/doc directory.
 You will need to be signed into github.com to see or edit in the wiki.
-
-* [[PyZmq]]
-* [[CompiledDllOTMql4Zmq]]
-* [[TestExpert]]
-* [[Scripts]]
-* [[Installation]]
-
-* [[TitleIndex]]
