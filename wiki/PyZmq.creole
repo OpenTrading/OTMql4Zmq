@@ -1,4 +1,4 @@
-== PyZmq
+== PyZmq ==
 
 PyZMQ is the official Python binding for the ZeroMQ Messaging Library
 and can be found at https://pypi.python.org/pypi/pyzmq 
@@ -17,7 +17,7 @@ either the compiled DLL OTMql4Zmq, or the Python OTMql4Zmq.
 So even if you are using the compiled DLL OTMql4Zmq, you may still
 want a Python with PyZmq installed to run the test scripts in {{{bin}}}.
 
-=== Installation
+=== Installation ===
 
 You will need to have [[pyzmq|https://pypi.python.org/pypi/pyzmq]]
 installed in your Python.  We have used the latest version at the time of writing,

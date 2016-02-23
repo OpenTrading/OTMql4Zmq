@@ -9,35 +9,13 @@
 <!-- <h1>Installation</h1> -->
 <h3>Installation</h3>
 
-<p>For the moment there is no installer: just "git clone" or download the<br />
-zip from github.com and unzip into an empty directory. Then recursively copy<br />
-the folder MQL4 over the MQL4 folder of your Metatrader installation. It will<br />
-not overwrite any system files, and keeps its files in subdirectories<br />
+<p>You can just "git clone" or download the zip from github.com<br />
+and unzip into an empty directory. Then recursively copy the folder<br />
+<tt>MQL4</tt> over the <tt>MQL4</tt> folder in your personal <tt>AppData...</tt> directory<br />
+(something like<br />
+<tt>c:\Users\Administrator\AppData\Roaming\MetaQuotes\Terminal\LONGHEXNANE</tt>).<br />
+It will not overwrite any system files, and keeps its files in subdirectories<br />
 called <tt>OTMql4</tt>.</p>
-
-<p>In general, recusively copy everything in the <tt>MQL4</tt> directory<br />
-to your <tt>c:\Program Files\[metatrader directory]\MQL4</tt> directory.</p>
-
-<p>This is the same as making the following 3 directories if they don't aleady exist:</p>
-<ul>
-	<li><tt>c:\Program Files\[metatrader directory]\MQL4\Experts\OTMql4</tt></li>
-	<li><tt>c:\Program Files\[metatrader directory]\MQL4\Include\OTMql4</tt></li>
-	<li><tt>c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4</tt>and then copying:</li>
-</ul><pre>
-MQL4\Include\OTMql4\*.mqh
-=&gt; c:\Program Files\[metatrader directory]\MQL4\Include\OTMql4
-
-MQL4\Libraries\OTMql4\*.mqh
-=&gt; c:\Program Files\[metatrader directory]\MQL4\Libraries\OTMql4
-
-MQL4\Experts\OTMql4\*.mq4 
-=&gt; c:\Program Files\[metatrader directory]\MQL4\Experts\OTMql4
-</pre>
-
-<p>This will help make this project compatible with other OpenTrader<br />
-projects, and will simplify the release-packaging later. Also by<br />
-giving files different names from Austen Conrad, we help avoid<br />
-collisions in case someone has both projects.</p>
 
 <p>Then copy the DLL files to the right places:</p>
 <pre>
@@ -51,7 +29,7 @@ whatever the windows system library is for your version of Windows.
 </pre>
 
 <p>These dlls and the header file <tt>MQL4/Include/OTMql4/OTMql4Zmq.mqh</tt><br />
-are maintained in the <a href="https://github.com/OpenTrading/mql4zmq/">https://github.com/OpenTrading/mql4zmq/</a> project.<br />
+are maintained in the <a href="mql4zmq">https://github.com/OpenTrading/mql4zmq</a> project.<br />
 These to projects should always be in sync, but if there is ever a<br />
 difference, use the files that are in this project and report bugs<br />
 against them here. We'll push the changes upstream to that project,<br />
@@ -62,14 +40,14 @@ and that project may be "broken" as it tries to upgrade to ZeroMQ 4.x.</p>
 <p>This project requires the prior installation of our<br />
 MQL4 trading library: <a href="https://github.com/OpenTrading/OTMql4Lib.">https://github.com/OpenTrading/OTMql4Lib.</a><br />
 Again, <tt>git clone</tt> this from <a href="https://github.com">https://github.com</a> and recursively copy<br />
-it's folder MQL4 over the MQL4 folder of your Metatrader installation.</p>
+it's folder MQL4 over the MQL4 folder of your personal Metatrader installation.</p>
 
 <p>To use the Python version of OTMql4Zmq, or to use the testing <a href="Scripts.html">Scripts</a><br />
 in the <tt>bin</tt> directory with either version, this project requires<br />
 the prior installation of our OTMql4Py project:<br />
 <a href="https://github.com/OpenTrading/OTMql4Py.">https://github.com/OpenTrading/OTMql4Py.</a><br />
 Again, <tt>git clone</tt> this from <a href="https://github.com">https://github.com</a> and recursively copy<br />
-it's folder MQL4 over the MQL4 folder of your Metatrader installation.<br />
+it's folder MQL4 over the MQL4 folder of your personal Metatrader directory.<br />
 See <a href="PyZmq.html">PyZmq</a>.</p>
 
 <h4>Dependencies</h4>
@@ -85,7 +63,7 @@ You can get the VC 10.0 Runtime from the links below:</p>
 <ul>
 	<li>Microsoft Visual C++ 2010 Redistributable Package (x64)    <a href="http://www.microsoft.com/downloads/en/details.aspx?displaylang=en&amp;FamilyID=bd512d9e-43c8-4655-81bf-9350143d5867">http://www.microsoft.com/downloads/en/details.aspx?displaylang=en&amp;FamilyID=bd512d9e-43c8-4655-81bf-9350143d5867</a>    <a href="https://www.microsoft.com/en-us/download/details.aspx?id=14632">https://www.microsoft.com/en-us/download/details.aspx?id=14632</a></li>
 </ul>
-<p>These are required to be able to load the <tt>libxmq.dll</tt> as it was<br />
+<p>These are required to be able to load the <tt>libzmq.dll</tt> as it was<br />
 compiled by Microsoft Visual C++ 2010 Express.</p>
 
 <hr />

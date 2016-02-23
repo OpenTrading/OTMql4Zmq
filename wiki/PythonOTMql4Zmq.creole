@@ -1,4 +1,4 @@
-=== Python OTMql4Zmq
+=== Python OTMql4Zmq ===
 
 The PyZmq expert and code requires the OpenTrading Metatrader-Python bridge
 https://github.com/OpenTrading/OTMql4Py/

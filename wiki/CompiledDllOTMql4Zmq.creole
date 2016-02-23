@@ -1,4 +1,4 @@
-== Compiled Dll OTMql4Zmq
+== Compiled Dll OTMql4Zmq ==
 
 These problems may be fixed now; test it add your results as comments to
 https://github.com/OpenTrading/OTMql4Zmq/issues/1
@@ -15,7 +15,7 @@ for the version 4 changes. We'll test v2.2.0 for a while first.
 For an example expert for using the Compiled Dll OTMql4Zmq,
 see [[TestExpert]].
 
-=== Compiled DLL Changes
+=== Compiled DLL Changes ===
 
 The libraries checked in to the {{{src/}}} directory
 and the header file {{{MQL4/Include/OTMql4/OTMql4Zmq.mqh}}} are from:

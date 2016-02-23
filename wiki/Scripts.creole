@@ -5,7 +5,7 @@ OTZmqCmdEA.mq4 or OTPyZmqCmdEA.mq4.
 
 These are Python scripts that require you have [[PyZmq]] installed.
 
-=== OTZmqSubscribe.py
+=== OTZmqSubscribe.py ===
 
 {{{Usage: OTZmqSubscribe.py [options] [topics...]}}}
 
@@ -20,7 +20,7 @@ MAYBE: do NOT run this until the expert has been loaded onto a chart.
 It may (but shouldn't) prevent the expert from binding to the ports.
 Also be sure to not keave it running between restarting Metatrader.
 
-=== OTZmqPublish.py
+=== OTZmqPublish.py ===
 
 {{{Usage: OTZmqPublish.py [options] [topics...]}}}
 

@@ -39,7 +39,7 @@ which provides a command-line interpreter to speak to the OTMql4AMQP
 or OTMql4Zmq enabled Metatrader (either version).
 Most of our testing of this package is done from OpenTrader.
 
-=== Pre-Release
+=== Pre-Release ===
 
 **This is a work in progress - a developers' pre-release version.**
 
@@ -56,7 +56,7 @@ try to move it to compiling against ZeroMQ 4.x. If anyone is good at MSVC
 and ZeroMQ, if you could look at the code in that project and help us with
 ZeroMQ 4.x version improvements, we'd be grateful.
 
-=== Project
+=== Project ===
 
 Please file any bugs in the issue tracker:
 https://github.com/OpenTrading/OTMql4Zmq/issues

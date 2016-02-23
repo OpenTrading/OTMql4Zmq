@@ -1,33 +1,29 @@
-== Test Expert
+== Test Expert ==
 
 There are two test expert advisors:
 
 * one for the compiled DLL OTMql4Zmq:
 [[MQL4/Experts/OTMql4/OTZmqCmdEA.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Experts/OTMql4/OTZmqCmdEA.mq4]]
-We are having **big** problems with the receiving of messages by Mt4; sending
-messages from Mt4 is fine. See:
-https://github.com/OpenTrading/OTMql4Zmq/issues/1 and [[CompiledDllOTMql4Zmq]].
-**In summary, the compiled DLL OTMql4Zmq is usable only 1 way for now**.
 
 * one for the Python [[PyZmq]]:
 [[MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4|https://github.com/OpenTrading/OTMql4Zmq/raw/master/MQL4/Experts/OTMql4/OTPyTestZmqEA.mq4]]
 See [[PythonOTMql4Zmq]].
 
-=== Troubleshooting
+=== Troubleshooting ===
 
 During debugging, we have had cases with the compiled DLL OTMql4Zmq of
 the expert not being able to be removed: this is not normally the case,
-only when we have bad code.
+but only when we have errors in our code.
 
 If this happens, it may precent Mt4 from exiting cleanly.  If so, you
 must kill Mt4, and then manually edit the profile for that chart to
-remove the expert. Go to the {{{profile}} directory of your Mt4
+remove the expert. Go to the {{{profile}}} directory of your Mt4
 installation and read the file {{{lastprofile.ini}}} to find out what
 profile you are currently using. Then go into that directory and
 search the {{{chr}}} files for the ones that contain an {{{<expert>}}}
 section. Remove the section that starts with {{{<expert>}}} and ends with
-{{{</expert>}}}, inclusive.  Also remove any backup files your editor might make.
-Then restart Mt4.
+{{{</expert>}}}, inclusive.  Also remove any backup files your editor might make,
+as all files in this directory get read by Mt4. Then restart Mt4.
 
 ----
 Parent: [[Home]]

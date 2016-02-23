@@ -4,7 +4,7 @@ OTMql4Zmq provide Metatrader 4 bindings for ZeroMQ, the high-speed messaging pro
 for asynchronous communications between financial and trading applications.
 
 
-=== Documentation
+=== Documentation ===
 
 * [[Installation]]
 * [[PyZmq]]

@@ -1,4 +1,4 @@
-#### Project History
+=== Project History ===
 
 The compiled DLL is based on the work by 2012 Austen Conrad:
 (from net/Git/github.com/AustenConrad/mql4zmq/mql4zmq.c)
