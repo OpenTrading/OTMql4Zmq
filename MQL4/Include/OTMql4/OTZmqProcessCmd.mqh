@@ -6,3 +6,5 @@
 #import "OTMql4/OTZmqProcessCmd.ex4"
 
 string zOTZmqProcessCmd (string uMess);
+
+#import
