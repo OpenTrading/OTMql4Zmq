@@ -13,3 +13,5 @@
 
 bool bZmqSend(int iSpeaker, string sMess);
 string uZmqReceive (int iListener);
+
+#import
